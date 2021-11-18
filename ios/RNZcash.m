@@ -1,6 +1,7 @@
 // Formatted using clang-format with default settings.
 
 #import "RNZcash.h"
+#import "ZcashLightClientKit"
 
 @implementation RNZcash
 
@@ -29,7 +30,7 @@ RCT_REMAP_METHOD(deriveViewKey, deriveViewKey:(NSString *) seedBytesHex
                  resolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
-NSString *out = [seedBytesHex stringByAppendingString:@"-viewKey"];
+NSString *out = [DerivationTool.deriveViewingKeys(seedBytesHex, 0)];
     resolve(out);
 }
 
