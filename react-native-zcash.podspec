@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
   s.platform     = :ios, "8.0"
   s.requires_arc = true
   s.source       = { :git => "https://github.com/EdgeApp/react-native-zcash.git", :tag => "v#{s.version}" }
-  s.source_files = "ios/**/*.{h,m}", ""
+  s.source_files = "ios/**/*.{h,m, swift}", ""
   s.script_phase = {
       :name => 'Build generate constants and build librustzcash',
       :script => 'sh ${PODS_TARGET_SRCROOT}/Scripts/build_librustzcash_xcode.sh',
@@ -32,6 +32,6 @@ Pod::Spec.new do |s|
   #   'CLANG_CXX_LIBRARY' => 'libc++'
   # }
 
-  s.dependency 'ZcashLightClientKit', '0.12.0-beta.2'
+  s.dependency 'ZcashLightClientKit', '0.12.0-beta.4'
   s.dependency "React"
 end

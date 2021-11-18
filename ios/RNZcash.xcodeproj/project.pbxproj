@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		34A38EA7274701E4009F3288 /* RNZcash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34A38EA6274701E4009F3288 /* RNZcash.swift */; };
+		351A796223DCF2D77616A07B /* Pods_RNZcash.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FCF63716091E9E56D85B82D3 /* Pods_RNZcash.framework */; };
 		B3E7B58A1CC2AC0600A0062D /* RNZcash.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RNZcash.m */; };
 /* End PBXBuildFile section */
 
@@ -24,8 +26,14 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNZcash.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNZcash.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		34A38EA42746FB8C009F3288 /* RNZcash-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RNZcash-Bridging-Header.h"; sourceTree = "<group>"; };
+		34A38EA5274701E3009F3288 /* RNZcash-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RNZcash-Bridging-Header.h"; sourceTree = "<group>"; };
+		34A38EA6274701E4009F3288 /* RNZcash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RNZcash.swift; sourceTree = "<group>"; };
+		4AAD9D883BB96107719A4009 /* Pods-RNZcash.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RNZcash.release.xcconfig"; path = "Target Support Files/Pods-RNZcash/Pods-RNZcash.release.xcconfig"; sourceTree = "<group>"; };
 		B3E7B5881CC2AC0600A0062D /* RNZcash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNZcash.h; sourceTree = "<group>"; };
 		B3E7B5891CC2AC0600A0062D /* RNZcash.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNZcash.m; sourceTree = "<group>"; };
+		CEC35ED4DC6C4232B8A3DB21 /* Pods-RNZcash.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RNZcash.debug.xcconfig"; path = "Target Support Files/Pods-RNZcash/Pods-RNZcash.debug.xcconfig"; sourceTree = "<group>"; };
+		FCF63716091E9E56D85B82D3 /* Pods_RNZcash.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RNZcash.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -33,6 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				351A796223DCF2D77616A07B /* Pods_RNZcash.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -50,10 +59,32 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				34A38EA6274701E4009F3288 /* RNZcash.swift */,
+				34A38EA42746FB8C009F3288 /* RNZcash-Bridging-Header.h */,
 				B3E7B5881CC2AC0600A0062D /* RNZcash.h */,
 				B3E7B5891CC2AC0600A0062D /* RNZcash.m */,
 				134814211AA4EA7D00B7C361 /* Products */,
+				CD384A8E061C21954E8D0914 /* Pods */,
+				5E3B9153267C26473F013E09 /* Frameworks */,
+				34A38EA5274701E3009F3288 /* RNZcash-Bridging-Header.h */,
 			);
+			sourceTree = "<group>";
+		};
+		5E3B9153267C26473F013E09 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FCF63716091E9E56D85B82D3 /* Pods_RNZcash.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CD384A8E061C21954E8D0914 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				CEC35ED4DC6C4232B8A3DB21 /* Pods-RNZcash.debug.xcconfig */,
+				4AAD9D883BB96107719A4009 /* Pods-RNZcash.release.xcconfig */,
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -63,6 +94,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 58B511EF1A9E6C8500147676 /* Build configuration list for PBXNativeTarget "RNZcash" */;
 			buildPhases = (
+				58BD63400802FE9DE98D4EB6 /* [CP] Check Pods Manifest.lock */,
 				58B511D71A9E6C8500147676 /* Sources */,
 				58B511D81A9E6C8500147676 /* Frameworks */,
 				58B511D91A9E6C8500147676 /* CopyFiles */,
@@ -87,6 +119,7 @@
 				TargetAttributes = {
 					58B511DA1A9E6C8500147676 = {
 						CreatedOnToolsVersion = 6.1.1;
+						LastSwiftMigration = 1310;
 					};
 				};
 			};
@@ -108,12 +141,38 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		58BD63400802FE9DE98D4EB6 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RNZcash-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		58B511D71A9E6C8500147676 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				B3E7B58A1CC2AC0600A0062D /* RNZcash.m in Sources */,
+				34A38EA7274701E4009F3288 /* RNZcash.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -215,33 +274,48 @@
 		};
 		58B511F01A9E6C8500147676 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = CEC35ED4DC6C4232B8A3DB21 /* Pods-RNZcash.debug.xcconfig */;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				DEFINES_MODULE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../React/**",
 					"$(SRCROOT)/../../react-native/React/**",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = RNZcash;
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "RNZcash-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
 		58B511F11A9E6C8500147676 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4AAD9D883BB96107719A4009 /* Pods-RNZcash.release.xcconfig */;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				DEFINES_MODULE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../React/**",
 					"$(SRCROOT)/../../react-native/React/**",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = RNZcash;
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "RNZcash-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
