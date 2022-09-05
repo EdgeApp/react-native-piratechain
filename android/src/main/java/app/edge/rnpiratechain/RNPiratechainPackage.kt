@@ -1,4 +1,4 @@
-package app.edge.rnzcash;
+package app.edge.rnpiratechain;
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule
@@ -7,10 +7,10 @@ import com.facebook.react.uimanager.ViewManager
 import java.util.Collections.emptyList
 
 
-class RNZcashPackage : ReactPackage {
+class RNPiratechainPackage : ReactPackage {
     override fun createNativeModules(reactContext: ReactApplicationContext) =
         listOf<NativeModule>(
-            RNZcashModule(reactContext)
+            RNPiratechainModule(reactContext)
         )
 
     override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> =
