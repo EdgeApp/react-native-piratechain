@@ -1,11 +1,11 @@
 {
-  "name": "react-native-zcash",
+  "name": "react-native-piratechain",
   "version": "0.2.2",
-  "description": "Zcash library for React Native",
-  "homepage": "https://github.com/EdgeApp/react-native-zcash",
+  "description": "Piratechain library for React Native",
+  "homepage": "https://github.com/EdgeApp/react-native-piratechain",
   "repository": {
     "type": "git",
-    "url": "git@github.com:EdgeApp/react-native-zcash.git"
+    "url": "git@github.com:EdgeApp/react-native-piratechain.git"
   },
   "license": "MIT",
   "author": "Airbitz, Inc.",
@@ -19,18 +19,18 @@
     "android/build.gradle",
     "android/src",
     "CHANGELOG.md",
-    "react-native-zcash.podspec",
-    "ios/RNZcash.swift",
-    "ios/RNZcash.m",
-    "ios/RNZcash-Bridging-Header.h",
-    "ios/RNZcash.xcodeproj",
-    "ios/RNZcash.xcworkspace",
+    "react-native-piratechain.podspec",
+    "ios/RNPiratechain.swift",
+    "ios/RNPiratechain.m",
+    "ios/RNPiratechain-Bridging-Header.h",
+    "ios/RNPiratechain.xcodeproj",
+    "ios/RNPiratechain.xcworkspace",
     "lib",
     "package.json",
     "README.md",
     "src"
   ],
-  "main": "lib/rnzcash.rn.js",
+  "main": "lib/rnpiratechain.rn.js",
   "types": "lib/src/index.d.ts",
   "scripts": {
     "fix": "npm run lint -- --fix",

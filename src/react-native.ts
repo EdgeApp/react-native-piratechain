@@ -17,7 +17,7 @@ import {
   WalletBalance
 } from './types'
 
-const { RNZcash } = NativeModules
+const { RNPiratechain } = NativeModules
 
 const snooze: Function = (ms: number) =>
   new Promise((resolve: Function) => setTimeout(resolve, ms))
@@ -29,14 +29,14 @@ export const KeyTool = {
     seedBytesHex: string,
     network: Network
   ): Promise<UnifiedViewingKey> => {
-    const result = await RNZcash.deriveViewingKey(seedBytesHex, network)
+    const result = await RNPiratechain.deriveViewingKey(seedBytesHex, network)
     return result
   },
   deriveSpendingKey: async (
     seedBytesHex: string,
     network: Network
   ): Promise<string> => {
-    const result = await RNZcash.deriveSpendingKey(seedBytesHex, network)
+    const result = await RNPiratechain.deriveSpendingKey(seedBytesHex, network)
     return result
   }
 }
@@ -46,21 +46,27 @@ export const AddressTool = {
     viewingKey: string,
     network: Network
   ): Promise<string> => {
-    const result = await RNZcash.deriveShieldedAddress(viewingKey, network)
+    const result = await RNPiratechain.deriveShieldedAddress(
+      viewingKey,
+      network
+    )
     return result
   },
   isValidShieldedAddress: async (
     address: string,
     network: Network = 'mainnet'
   ): Promise<boolean> => {
-    const result = await RNZcash.isValidShieldedAddress(address, network)
+    const result = await RNPiratechain.isValidShieldedAddress(address, network)
     return result
   },
   isValidTransparentAddress: async (
     address: string,
     network: Network = 'mainnet'
   ): Promise<boolean> => {
-    const result = await RNZcash.isValidTransparentAddress(address, network)
+    const result = await RNPiratechain.isValidTransparentAddress(
+      address,
+      network
+    )
     return result
   }
 }
@@ -72,7 +78,7 @@ class Synchronizer {
   network: Network
 
   constructor(alias: string, network: Network) {
-    this.eventEmitter = new NativeEventEmitter(RNZcash)
+    this.eventEmitter = new NativeEventEmitter(RNPiratechain)
     this.subscriptions = []
     this.alias = alias
     this.network = network
@@ -83,7 +89,7 @@ class Synchronizer {
   //     Here are a few functions to demonstrate functionality but the final library should not have these functions
   //
   async readyToSend(): Promise<boolean> {
-    const result = await RNZcash.readyToSend()
+    const result = await RNPiratechain.readyToSend()
     return result
   }
 
@@ -105,25 +111,25 @@ class Synchronizer {
   }
 
   async getBlockCount(): Promise<number> {
-    const result = await RNZcash.getBlockCount()
+    const result = await RNPiratechain.getBlockCount()
     return result
   }
   // End PoC behavior
   /// ////////////////////////////////////////////////////////////////
 
   async start(): Promise<String> {
-    const result = await RNZcash.start(this.alias)
+    const result = await RNPiratechain.start(this.alias)
     return result
   }
 
   async stop(): Promise<String> {
     this.unsubscribe()
-    const result = await RNZcash.stop(this.alias)
+    const result = await RNPiratechain.stop(this.alias)
     return result
   }
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
-    await RNZcash.initialize(
+    await RNPiratechain.initialize(
       initializerConfig.fullViewingKey.extfvk,
       initializerConfig.fullViewingKey.extpub,
       initializerConfig.birthdayHeight,
@@ -135,27 +141,27 @@ class Synchronizer {
   }
 
   async getLatestNetworkHeight(alias: string): Promise<number> {
-    const result = await RNZcash.getLatestNetworkHeight(alias)
+    const result = await RNPiratechain.getLatestNetworkHeight(alias)
     return result
   }
 
   async getLatestScannedHeight(): Promise<number> {
-    const result = await RNZcash.getLatestScannedHeight()
+    const result = await RNPiratechain.getLatestScannedHeight()
     return result
   }
 
   async getProgress(): Promise<number> {
-    const result = await RNZcash.getProgress()
+    const result = await RNPiratechain.getProgress()
     return result
   }
 
   async getStatus(): Promise<SynchronizerStatus> {
-    const result = await RNZcash.getStatus()
+    const result = await RNPiratechain.getStatus()
     return SynchronizerStatus[result.name as keyof typeof SynchronizerStatus]
   }
 
   async getShieldedBalance(): Promise<WalletBalance> {
-    const result = await RNZcash.getShieldedBalance(this.alias)
+    const result = await RNPiratechain.getShieldedBalance(this.alias)
     return result
   }
 
@@ -170,7 +176,7 @@ class Synchronizer {
   }
 
   async getTransactions(range: BlockRange): Promise<ConfirmedTransaction[]> {
-    const result = await RNZcash.getTransactions(
+    const result = await RNPiratechain.getTransactions(
       this.alias,
       range.first,
       range.last
@@ -179,11 +185,11 @@ class Synchronizer {
   }
 
   rescan(height: number): void {
-    RNZcash.rescan(this.alias, height)
+    RNPiratechain.rescan(this.alias, height)
   }
 
   async sendToAddress(spendInfo: SpendInfo): Promise<PendingTransaction> {
-    const result = await RNZcash.spendToAddress(
+    const result = await RNPiratechain.spendToAddress(
       this.alias,
       spendInfo.zatoshi,
       spendInfo.toAddress,
@@ -199,7 +205,7 @@ class Synchronizer {
   // sendToAddress (spendInfo: SpendInfo): void
 
   // getPendingTransactions (): PendingTransactions[]
-  // getConfirmedTransactions (query: TransactionQuery): ZcashTransaction[]
+  // getConfirmedTransactions (query: TransactionQuery): PiratechainTransaction[]
 
   // Events
 

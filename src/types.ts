@@ -29,7 +29,7 @@ export interface TransactionQuery {
   endDate?: number
 }
 
-export interface ZcashTransaction {
+export interface PiratechainTransaction {
   txId: string
   accountIndex: number
   fee: string
@@ -41,7 +41,7 @@ export interface ZcashTransaction {
   blockTime: number // UNIX timestamp
 }
 
-export type PendingTransaction = ZcashTransaction & {
+export type PendingTransaction = PiratechainTransaction & {
   expiryHeight: number
   cancelled: number
   submitAttempts: number
