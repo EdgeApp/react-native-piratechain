@@ -2,7 +2,7 @@
 #import <React/RCTEventEmitter.h>
 
 
-@interface RCT_EXTERN_MODULE(RNZcash, RCTEventEmitter<RCTBridgeModule>)
+@interface RCT_EXTERN_MODULE(RNPiratechain, RCTEventEmitter<RCTBridgeModule>)
 
 // Synchronizer
 RCT_EXTERN_METHOD(initialize:(NSString *)extfvk

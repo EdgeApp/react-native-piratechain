@@ -13,10 +13,10 @@ Pod::Spec.new do |s|
   s.swift_version = '5.4'
   s.platform     = :ios, "12.0"
   s.requires_arc = true
-  s.source       = { :git => "https://github.com/EdgeApp/react-native-zcash.git", :tag => "v#{s.version}" }
+  s.source       = { :git => "https://github.com/EdgeApp/react-native-piratechain.git", :tag => "v#{s.version}" }
   s.source_files = "ios/**/*.{h,m,swift}"
 
  s.dependency "React"
- s.dependency 'ZcashLightClientKit', '0.14.0-beta'
+ s.dependency 'PirateLightClientKit', '0.14.3-beta'
 
 end
