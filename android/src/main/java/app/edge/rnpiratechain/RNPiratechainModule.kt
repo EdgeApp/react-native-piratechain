@@ -5,6 +5,7 @@ import pirate.android.sdk.PirateSdkSynchronizer
 import pirate.android.sdk.Synchronizer
 import pirate.android.sdk.db.entity.*
 import pirate.android.sdk.ext.*
+import pirate.android.sdk.internal.service.PirateLightWalletGrpcService
 import pirate.android.sdk.internal.transaction.PiratePagedTransactionRepository
 import pirate.android.sdk.internal.*
 import pirate.android.sdk.type.*
@@ -173,6 +174,18 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     fun getLatestNetworkHeight(alias: String, promise: Promise) = promise.wrap {
         val wallet = getWallet(alias)
         wallet.synchronizer.latestHeight
+    }
+
+    @ReactMethod
+    fun getBirthdayHeight(network: String = "mainnet", promise: Promise) = promise.wrap {
+        var networkInt = 1
+        if (network != "mainnet") {
+            networkInt = 0
+        }
+        var lightwalletService = PirateLightWalletGrpcService(reactApplicationContext, PirateNetwork.from(networkInt))
+        val height = lightwalletService?.getLatestBlockHeight()
+        lightwalletService?.shutdown()
+        height
     }
 
     @ReactMethod
