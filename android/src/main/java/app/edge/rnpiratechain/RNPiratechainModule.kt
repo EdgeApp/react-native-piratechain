@@ -177,12 +177,8 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun getBirthdayHeight(network: String = "mainnet", promise: Promise) = promise.wrap {
-        var networkInt = 1
-        if (network != "mainnet") {
-            networkInt = 0
-        }
-        var lightwalletService = PirateLightWalletGrpcService(reactApplicationContext, PirateNetwork.from(networkInt))
+    fun getBirthdayHeight(host: String, port: Int, promise: Promise) = promise.wrap {
+        var lightwalletService = PirateLightWalletGrpcService(reactApplicationContext, host, port)
         val height = lightwalletService?.getLatestBlockHeight()
         lightwalletService?.shutdown()
         height
