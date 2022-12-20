@@ -1,4 +1,14 @@
-# React Native Zcash
+# React Native Piratechain
+
+## 0.3.0 (2022-12-19)
+
+- Init Piratechain
+- Port features and fixes from react-native-zcash:
+  - Add `getBirthdayHeight` method to query blockheight without an active synchronizer
+  - iOS: Add missing `getLatestNetworkHeight` method
+  - RN: Remove unimplemented methods and POC comments
+  - Fix exported types
+  - iOS: Handle potential throw in synchronizer.latestHeight()
 
 ## 0.2.2 (2022-06-10)
 
