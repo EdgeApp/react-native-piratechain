@@ -2,7 +2,7 @@
 #import <React/RCTEventEmitter.h>
 
 
-@interface RCT_EXTERN_MODULE(RNZcash, RCTEventEmitter<RCTBridgeModule>)
+@interface RCT_EXTERN_MODULE(RNPiratechain, RCTEventEmitter<RCTBridgeModule>)
 
 // Synchronizer
 RCT_EXTERN_METHOD(initialize:(NSString *)extfvk
@@ -22,6 +22,17 @@ rejecter:(RCTPromiseRejectBlock)reject
 )
 
 RCT_EXTERN_METHOD(stop:(NSString *)alias
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(getLatestNetworkHeight:(NSString *)alias
+resolver:(RCTPromiseResolveBlock)resolve
+rejecter:(RCTPromiseRejectBlock)reject
+)
+
+RCT_EXTERN_METHOD(getBirthdayHeight:(NSString *)host
+:(NSInteger *)port
 resolver:(RCTPromiseResolveBlock)resolve
 rejecter:(RCTPromiseRejectBlock)reject
 )

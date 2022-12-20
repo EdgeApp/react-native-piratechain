@@ -1,9 +1,9 @@
 import Foundation
-import ZcashLightClientKit
+import PirateLightClientKit
 import os
 
 var SynchronizerMap = [String: WalletSynchronizer]()
-var loggerProxy = RNZcashLogger(logLevel: .debug)
+var loggerProxy = RNPiratechainLogger(logLevel: .debug)
 
 struct ViewingKey: UnifiedViewingKey {
     var extfvk: ExtendedFullViewingKey
@@ -69,19 +69,19 @@ struct ProcessorState {
 // Used when calling reject where there isn't an error object
 let genericError = NSError(domain: "", code: 0)
 
-@objc(RNZcash)
-class RNZcash : RCTEventEmitter {
+@objc(RNPiratechain)
+class RNPiratechain : RCTEventEmitter {
 
     override static func requiresMainQueueSetup() -> Bool {
         return true
     }
 
-    private func getNetworkParams(_ network: String) -> ZcashNetwork {
+    private func getNetworkParams(_ network: String) -> PirateNetwork {
     switch network {
         case "testnet":
-            return ZcashNetworkBuilder.network(for: .testnet)
+            return PirateNetworkBuilder.network(for: .testnet)
         default:
-            return ZcashNetworkBuilder.network(for: .mainnet)
+            return PirateNetworkBuilder.network(for: .mainnet)
         }
     }
 
@@ -139,6 +139,32 @@ class RNZcash : RCTEventEmitter {
             resolve(nil)
         } else {
             reject("StopError", "Wallet does not exist", genericError)
+        }
+    }
+
+    @objc func getLatestNetworkHeight(_ alias: String, resolver resolve:@escaping RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
+        if let wallet = SynchronizerMap[alias] {
+            do {
+                let height = try wallet.synchronizer.latestHeight()
+                resolve(height)
+            } catch {
+                reject("getLatestNetworkHeight", "Failed to query blockheight", error)
+            }
+        } else {
+            reject("getLatestNetworkHeightError", "Wallet does not exist", genericError)
+        }
+    }
+
+    // A convenience method to get the block height when the synchronizer isn't running
+    @objc func getBirthdayHeight(_ host: String, _ port: Int, resolver resolve:@escaping RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
+        do {
+            let endpoint = LightWalletEndpoint(address: host, port: port, secure: true)
+            let lightwalletd: LightWalletService = LightWalletGRPCService(endpoint:endpoint)
+            let height = try lightwalletd.latestBlockHeight()
+            lightwalletd.closeConnection()
+            resolve(height)
+        } catch {
+            reject("getLatestNetworkHeightGrpc", "Failed to query blockheight", error)
         }
     }
 
@@ -238,9 +264,9 @@ class RNZcash : RCTEventEmitter {
     private func getDerivationToolForNetwork(_ network: String) -> DerivationTool {
         switch network {
         case "testnet":
-            return DerivationTool(networkType:ZcashNetworkBuilder.network(for: .testnet).networkType)
+            return DerivationTool(networkType:PirateNetworkBuilder.network(for: .testnet).networkType)
         default:
-            return DerivationTool(networkType:ZcashNetworkBuilder.network(for: .mainnet).networkType)
+            return DerivationTool(networkType:PirateNetworkBuilder.network(for: .mainnet).networkType)
         }
     }
 
@@ -398,7 +424,11 @@ class WalletSynchronizer : NSObject {
             self.processorState.lastDownloadedHeight = self.synchronizer.latestScannedHeight
             self.processorState.scanProgress = 100
             self.processorState.lastScannedHeight = self.synchronizer.latestScannedHeight
-            self.processorState.networkBlockHeight = try! self.synchronizer.latestHeight()
+            do {
+                try self.processorState.networkBlockHeight = self.synchronizer.latestHeight()
+            } catch {
+                // ignore if synchronizer throws
+            }
         }
 
         if self.processorState.lastDownloadedHeight != prevLastDownloadedHeight || self.processorState.scanProgress != prevScanProgress ||
@@ -451,25 +481,25 @@ func documentsDirectoryHelper() throws -> URL {
     try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
 }
 
-func cacheDbURLHelper(_ alias: String, _ network: ZcashNetwork) throws -> URL {
+func cacheDbURLHelper(_ alias: String, _ network: PirateNetwork) throws -> URL {
     try documentsDirectoryHelper()
         .appendingPathComponent(
-            network.constants.defaultDbNamePrefix + alias + ZcashSDK.defaultCacheDbName,
+            network.constants.defaultDbNamePrefix + alias + PirateSDK.defaultCacheDbName,
             isDirectory: false
         )
 }
 
-func dataDbURLHelper(_ alias: String, _ network: ZcashNetwork) throws -> URL {
+func dataDbURLHelper(_ alias: String, _ network: PirateNetwork) throws -> URL {
     try documentsDirectoryHelper()
         .appendingPathComponent(
-            network.constants.defaultDbNamePrefix + alias + ZcashSDK.defaultDataDbName,
+            network.constants.defaultDbNamePrefix + alias + PirateSDK.defaultDataDbName,
             isDirectory: false
         )
 }
 
-func pendingDbURLHelper(_ alias: String, _ network: ZcashNetwork) throws -> URL {
+func pendingDbURLHelper(_ alias: String, _ network: PirateNetwork) throws -> URL {
     try documentsDirectoryHelper()
-        .appendingPathComponent(network.constants.defaultDbNamePrefix + alias + ZcashSDK.defaultPendingDbName)
+        .appendingPathComponent(network.constants.defaultDbNamePrefix + alias + PirateSDK.defaultPendingDbName)
 }
 
 func spendParamsURLHelper(_ alias: String) throws -> URL {
@@ -482,7 +512,7 @@ func outputParamsURLHelper(_ alias: String) throws -> URL {
 
 
 // Logger
-class RNZcashLogger: ZcashLightClientKit.Logger {
+class RNPiratechainLogger: PirateLightClientKit.Logger {
     enum LogLevel: Int {
         case debug
         case error

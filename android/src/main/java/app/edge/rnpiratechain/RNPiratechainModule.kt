@@ -1,14 +1,15 @@
-package app.edge.rnzcash;
+package app.edge.rnpiratechain;
 
-import cash.z.ecc.android.sdk.Initializer
-import cash.z.ecc.android.sdk.SdkSynchronizer
-import cash.z.ecc.android.sdk.Synchronizer
-import cash.z.ecc.android.sdk.db.entity.*
-import cash.z.ecc.android.sdk.ext.*
-import cash.z.ecc.android.sdk.internal.transaction.PagedTransactionRepository
-import cash.z.ecc.android.sdk.internal.*
-import cash.z.ecc.android.sdk.type.*
-import cash.z.ecc.android.sdk.tool.DerivationTool
+import pirate.android.sdk.PirateInitializer
+import pirate.android.sdk.PirateSdkSynchronizer
+import pirate.android.sdk.Synchronizer
+import pirate.android.sdk.db.entity.*
+import pirate.android.sdk.ext.*
+import pirate.android.sdk.internal.service.PirateLightWalletGrpcService
+import pirate.android.sdk.internal.transaction.PiratePagedTransactionRepository
+import pirate.android.sdk.internal.*
+import pirate.android.sdk.type.*
+import pirate.android.sdk.tool.PirateDerivationTool
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
 import kotlinx.coroutines.CoroutineScope
@@ -18,16 +19,16 @@ import kotlinx.coroutines.runBlocking
 import java.nio.charset.StandardCharsets
 import kotlin.coroutines.EmptyCoroutineContext
 
-class WalletSynchronizer constructor(val initializer: Initializer)  {
+class WalletSynchronizer constructor(val initializer: PirateInitializer)  {
 
-    val synchronizer: SdkSynchronizer = Synchronizer.newBlocking(
+    val synchronizer: PirateSdkSynchronizer = Synchronizer.newBlocking(
         initializer
-    ) as SdkSynchronizer
-    val repository = runBlocking { PagedTransactionRepository.new(initializer.context, 10, initializer.rustBackend, initializer.birthday, initializer.viewingKeys) }
+    ) as PirateSdkSynchronizer
+    val repository = runBlocking { PiratePagedTransactionRepository.new(initializer.context, 10, initializer.rustBackend, initializer.birthday, initializer.viewingKeys) }
     var isStarted = false
 }
 
-class RNZcashModule(private val reactContext: ReactApplicationContext) :
+class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
 
     /**
@@ -40,22 +41,22 @@ class RNZcashModule(private val reactContext: ReactApplicationContext) :
     var moduleScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
     var synchronizerMap = mutableMapOf<String, WalletSynchronizer>()
 
-    val networks = mapOf("mainnet" to ZcashNetwork.Mainnet, "testnet" to ZcashNetwork.Testnet)
+    val networks = mapOf("mainnet" to PirateNetwork.Mainnet, "testnet" to PirateNetwork.Testnet)
 
-    override fun getName() = "RNZcash"
+    override fun getName() = "RNPiratechain"
 
     @ReactMethod
     fun initialize(extfvk: String, extpub: String, birthdayHeight: Int, alias: String, networkName: String = "mainnet", defaultHost: String = "mainnet.lightwalletd.com", defaultPort: Int = 9067, promise: Promise) =
         promise.wrap {
-          Twig.plant(TroubleshootingTwig())
-          var vk = UnifiedViewingKey(extfvk, extpub)
+          Twig.plant(PirateTroubleshootingTwig(formatter = { "@TWIG PIRATE $it" }))
+          var vk = PirateUnifiedViewingKey(extfvk, extpub)
           if (synchronizerMap[alias] == null) {
             runBlocking {
-              Initializer.new(reactApplicationContext) {
+              PirateInitializer.new(reactApplicationContext) {
                 it.importedWalletBirthday(birthdayHeight)
                 it.setViewingKeys(vk)
                 it.setNetwork(networks[networkName]
-                  ?: ZcashNetwork.Mainnet, defaultHost, defaultPort)
+                  ?: PirateNetwork.Mainnet, defaultHost, defaultPort)
                 it.alias = alias
               }
             }.let { initializer ->
@@ -152,7 +153,7 @@ class RNZcashModule(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun deriveViewingKey(seedBytesHex: String, network: String = "mainnet", promise: Promise) {
-        var keys = runBlocking { DerivationTool.deriveUnifiedViewingKeys(seedBytesHex.fromHex(), networks.getOrDefault(network, ZcashNetwork.Mainnet))[0] }
+        var keys = runBlocking { PirateDerivationTool.derivePirateUnifiedViewingKeys(seedBytesHex.fromHex(), networks.getOrDefault(network, PirateNetwork.Mainnet))[0] }
         val map = Arguments.createMap()
         map.putString("extfvk", keys.extfvk)
         map.putString("extpub", keys.extpub)
@@ -161,7 +162,7 @@ class RNZcashModule(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun deriveSpendingKey(seedBytesHex: String, network: String = "mainnet", promise: Promise) = promise.wrap {
-        runBlocking { DerivationTool.deriveSpendingKeys(seedBytesHex.fromHex(), networks.getOrDefault(network, ZcashNetwork.Mainnet))[0] }
+        runBlocking { PirateDerivationTool.deriveSpendingKeys(seedBytesHex.fromHex(), networks.getOrDefault(network, PirateNetwork.Mainnet))[0] }
     }
 
     //
@@ -173,6 +174,18 @@ class RNZcashModule(private val reactContext: ReactApplicationContext) :
     fun getLatestNetworkHeight(alias: String, promise: Promise) = promise.wrap {
         val wallet = getWallet(alias)
         wallet.synchronizer.latestHeight
+    }
+
+    @ReactMethod
+    fun getBirthdayHeight(network: String = "mainnet", promise: Promise) = promise.wrap {
+        var networkInt = 1
+        if (network != "mainnet") {
+            networkInt = 0
+        }
+        var lightwalletService = PirateLightWalletGrpcService(reactApplicationContext, PirateNetwork.from(networkInt))
+        val height = lightwalletService?.getLatestBlockHeight()
+        lightwalletService?.shutdown()
+        height
     }
 
     @ReactMethod
@@ -213,13 +226,9 @@ class RNZcashModule(private val reactContext: ReactApplicationContext) :
                         promise.resolve(map)
                     } else if (tx.isFailure()) {
                         val map = Arguments.createMap()
-                        map.putInt("expiryHeight", tx.expiryHeight)
-                        map.putString("cancelled", tx.cancelled.toString())
-                        map.putString("encodeAttempts", tx.encodeAttempts.toString())
-                        map.putString("submitAttempts", tx.submitAttempts.toString())
                         if (tx.errorMessage != null) map.putString("errorMessage", tx.errorMessage)
                         if (tx.errorCode != null) map.putString("errorCode", tx.errorCode.toString())
-                        promise.resolve(false)
+                        promise.resolve(map)
                     }
                 }
             } catch (t: Throwable) {
@@ -235,7 +244,7 @@ class RNZcashModule(private val reactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun deriveShieldedAddress(viewingKey: String, network: String = "mainnet", promise: Promise) = promise.wrap {
-        runBlocking { DerivationTool.deriveShieldedAddress(viewingKey, networks.getOrDefault(network, ZcashNetwork.Mainnet)) }
+        runBlocking { PirateDerivationTool.deriveShieldedAddress(viewingKey, networks.getOrDefault(network, PirateNetwork.Mainnet)) }
     }
 
     @ReactMethod
@@ -303,16 +312,6 @@ class RNZcashModule(private val reactContext: ReactApplicationContext) :
         reactApplicationContext
             .getJSModule(RCTDeviceEventEmitter::class.java)
             .emit(eventName, args)
-    }
-
-    // TODO: move this to the SDK
-    inline fun ByteArray?.toUtf8Memo(): String {
-        return if (this == null || this[0] >= 0xF5) "" else try {
-            // trim empty and "replacement characters" for codes that can't be represented in unicode
-            String(this, StandardCharsets.UTF_8).trim('\u0000', '\uFFFD')
-        } catch (t: Throwable) {
-            "Unable to parse memo."
-        }
     }
 
     inline fun ByteArray.toHexReversed(): String {
