@@ -46,7 +46,7 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     override fun getName() = "RNPiratechain"
 
     @ReactMethod
-    fun initialize(extfvk: String, extpub: String, birthdayHeight: Int, alias: String, networkName: String = "mainnet", defaultHost: String = "mainnet.lightwalletd.com", defaultPort: Int = 9067, promise: Promise) =
+    fun initialize(extfvk: String, extpub: String, birthdayHeight: Int, alias: String, networkName: String = "mainnet", defaultHost: String = "lightd1.pirate.black", defaultPort: Int = 9067, promise: Promise) =
         promise.wrap {
           Twig.plant(PirateTroubleshootingTwig(formatter = { "@TWIG PIRATE $it" }))
           var vk = PirateUnifiedViewingKey(extfvk, extpub)
@@ -177,12 +177,8 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun getBirthdayHeight(network: String = "mainnet", promise: Promise) = promise.wrap {
-        var networkInt = 1
-        if (network != "mainnet") {
-            networkInt = 0
-        }
-        var lightwalletService = PirateLightWalletGrpcService(reactApplicationContext, PirateNetwork.from(networkInt))
+    fun getBirthdayHeight(host: String, port: Int, promise: Promise) = promise.wrap {
+        var lightwalletService = PirateLightWalletGrpcService(reactApplicationContext, host, port)
         val height = lightwalletService?.getLatestBlockHeight()
         lightwalletService?.shutdown()
         height
