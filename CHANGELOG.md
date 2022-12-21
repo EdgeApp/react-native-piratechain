@@ -1,5 +1,9 @@
 # React Native Piratechain
 
+## 0.3.2 (2022-12-20)
+
+- getBirthdayHeight: Remove Android specific network name and use host and port for both platforms
+
 ## 0.3.0 (2022-12-19)
 
 - Init Piratechain
