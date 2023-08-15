@@ -17,6 +17,6 @@ Pod::Spec.new do |s|
   s.source_files = "ios/**/*.{h,m,swift}"
 
  s.dependency "React"
- s.dependency 'PirateLightClientKit', '0.14.3-beta'
+ s.dependency 'PirateLightClientKit', :git => 'https://github.com/peachbits/PirateLightClientKit.git', :commit => '9bd5f5de3448bd4be60b2991e9c9b028d6056ac9'
 
 end
