@@ -1,5 +1,4 @@
 import Foundation
-import PirateLightClientKit
 import os
 
 var SynchronizerMap = [String: WalletSynchronizer]()
@@ -512,7 +511,7 @@ func outputParamsURLHelper(_ alias: String) throws -> URL {
 
 
 // Logger
-class RNPiratechainLogger: PirateLightClientKit.Logger {
+class RNPiratechainLogger: Logger {
     enum LogLevel: Int {
         case debug
         case error

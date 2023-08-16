@@ -18,7 +18,6 @@ pod 'CNIODarwin', :modular_headers => true
 pod 'CNIOHTTPParser', :modular_headers => true
 pod 'CNIOLinux', :modular_headers => true
 pod 'CNIOWindows', :modular_headers => true
-pod 'PirateLightClientKit', :git => 'https://github.com/PirateNetwork/PirateLightClientKit.git', :commit => 'f939db082643d73cead7172da0a862f3b3df34a9'
 ```
 
 On the Android side, you may need to configure an explicit Kotlin version, so all your native dependencies will be compatible with one another. Simply define `kotlinVersion` in your `android/build.gradle` file:
@@ -49,3 +48,17 @@ buildscript {
   - `getShieldedBalance`
   - `getTransactions`
   - `sendToAddress`
+
+## Developing
+
+This library relies on a large amount of native code from other repos. To integrate this code, you must run the following script before publishing this library to NPM:
+
+```sh
+npm run update-sources
+```
+
+This script will download ZCashLightClientKit and zcash-light-client-ffi, modify them for React Native, and integrate them with our wrapper code.
+
+The `update-sources` script is also the place to make edits when upgrading any of the third-party dependencies.
+
+We also have an `update-checkpoints` command that will connect to a node and generate fresh checkpoints based on the chain state.

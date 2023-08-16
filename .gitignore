@@ -1,5 +1,8 @@
 # Build output:
+/ios/libpiratelc.xcframework/
+/ios/PirateLightClientKit/
 /lib/
+/tmp/
 
 # Package managers:
 *.tgz
