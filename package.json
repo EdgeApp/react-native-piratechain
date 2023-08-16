@@ -18,17 +18,23 @@
   "bin": {
     "copyCheckpoints": "./scripts/copyCheckpoints.js"
   },
+  "main": "lib/rnpiratechain.rn.js",
   "files": [
     "/android/build.gradle",
     "/android/src/",
     "/CHANGELOG.md",
-    "/react-native-piratechain.podspec",
-    "/ios/",
+    "/ios/RNPiratechain-Bridging-Header.h",
+    "/ios/RNPiratechain.m",
+    "/ios/RNPiratechain.swift",
+    "/ios/RNPiratechain.xcodeproj",
+    "/ios/RNPiratechain.xcworkspace",
     "/lib/",
     "/package.json",
-    "/README.md"
+    "/react-native-piratechain.podspec",
+    "/README.md",
+    "/src/",
+    "/scripts/copyCheckpoints.js"
   ],
-  "main": "lib/rnpiratechain.rn.js",
   "types": "lib/src/react-native.d.ts",
   "scripts": {
     "fix": "npm run lint -- --fix",
