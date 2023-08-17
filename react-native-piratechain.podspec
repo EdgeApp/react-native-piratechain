@@ -10,13 +10,23 @@ Pod::Spec.new do |s|
   s.license      = package['license']
   s.authors      = package['author']
 
-  s.swift_version = '5.4'
   s.platform     = :ios, "12.0"
-  s.requires_arc = true
-  s.source       = { :git => "https://github.com/EdgeApp/react-native-piratechain.git", :tag => "v#{s.version}" }
-  s.source_files = "ios/**/*.{h,m,swift}"
+  s.source = {
+    :git => "https://github.com/EdgeApp/react-native-piratechain.git",
+    :tag => "v#{s.version}"
+  }
+  s.source_files =
+    "ios/react-native-piratechain-Bridging-Header.h",
+    "ios/RNPiratechain.m",
+    "ios/RNPiratechain.swift",
+    "ios/PirateLightClientKit/**/*.swift"
+  s.resource_bundles = {
+    "piratechain-mainnet" => "ios/PirateLightClientKit/Resources/piratesaplingtree-checkpoints/mainnet/*.json",
+    "piratechain-testnet" => "ios/PirateLightClientKit/Resources/piratesaplingtree-checkpoints/testnet/*.json"
+  }
+  s.vendored_frameworks = "ios/libpiratelc.xcframework"
 
- s.dependency "React"
- s.dependency 'PirateLightClientKit', '0.14.3-beta'
-
+  s.dependency "gRPC-Swift", "~> 1.0"
+  s.dependency "SQLite.swift", "~> 0.12"
+  s.dependency "React-Core"
 end
