@@ -1,5 +1,12 @@
 # React Native Piratechain
 
+## 0.3.5 (2023-08-17)
+
+- fixed: Update our default Kotlin version to be compatible with React Native v0.72.
+- changed: Remove our iOS dependency on PirateLightClientKit by copying the Swift sources directly into this NPM package. This removes the need for users to touch checkpoints on either platform.
+- added: Add checkpoints to repo with script to update and copy them from Android to iOS build directories
+- changed: Proper install instructions for Android in README
+
 ## 0.3.3 (2023-06-22)
 
 - fixed: Update the Android build.gradle to use the upstream-specified Kotlin version and upstream-specified appcompat library version.
