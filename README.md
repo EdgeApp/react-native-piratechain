@@ -1,6 +1,6 @@
 # react-native-piratechain
 
-This library packages the PirateLightClientKit for use on React Native.
+This library packages the PiratechainLightClientKit for use on React Native.
 
 ## Usage
 
@@ -32,22 +32,21 @@ buildscript {
 
 ### API overview
 
-- `KeyTool`
+- `Tools`
   - `deriveViewingKey`
-  - `deriveSpendingKey`
   - `getBirthdayHeight`
-- `AddressTool`
-  - `deriveShieldedAddress`
-  - `isValidShieldedAddress`
-  - `isValidTransparentAddress`
+  - `isValidAddress`
 - `makeSynchronizer`
   - `start`
   - `stop`
   - `rescan`
   - `getLatestNetworkHeight`
-  - `getShieldedBalance`
+  - `getBalance`
   - `getTransactions`
   - `sendToAddress`
+  - `deriveUnifiedAddress`
+
+`Tools` contains methods that don't require a running synchronizer (with one exception, `isValidAddress` on Android which does requires any synchronizer connected to the requested network).
 
 ## Developing
 
@@ -57,7 +56,7 @@ This library relies on a large amount of native code from other repos. To integr
 npm run update-sources
 ```
 
-This script will download ZCashLightClientKit and zcash-light-client-ffi, modify them for React Native, and integrate them with our wrapper code.
+This script will download PiratechainLightClientKit and piratechain-light-client-ffi, modify them for React Native, and integrate them with our wrapper code.
 
 The `update-sources` script is also the place to make edits when upgrading any of the third-party dependencies.
 

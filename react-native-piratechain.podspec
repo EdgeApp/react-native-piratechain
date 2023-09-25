@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.license      = package['license']
   s.authors      = package['author']
 
-  s.platform     = :ios, "12.0"
+  s.platform     = :ios, "13.0"
   s.source = {
     :git => "https://github.com/EdgeApp/react-native-piratechain.git",
     :tag => "v#{s.version}"
@@ -26,7 +26,8 @@ Pod::Spec.new do |s|
   }
   s.vendored_frameworks = "ios/libpiratelc.xcframework"
 
-  s.dependency "gRPC-Swift", "~> 1.0"
+  s.dependency "MnemonicSwift", "~> 2.2"
+  s.dependency "gRPC-Swift", "~> 1.8"
   s.dependency "SQLite.swift", "~> 0.12"
   s.dependency "React-Core"
 end

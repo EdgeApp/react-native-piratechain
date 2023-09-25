@@ -12,5 +12,6 @@ class RNPiratechainPackage : ReactPackage {
             RNPiratechainModule(reactContext),
         )
 
-    override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> = emptyList()
+    override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> =
+        emptyList()
 }

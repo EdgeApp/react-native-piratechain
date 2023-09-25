@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 
 import {
+  Addresses,
   BlockRange,
   ConfirmedTransaction,
   InitializerConfig,
@@ -21,7 +22,7 @@ const { RNPiratechain } = NativeModules
 
 type Callback = (...args: any[]) => any
 
-export const KeyTool = {
+export const Tools = {
   deriveViewingKey: async (
     seedBytesHex: string,
     network: Network
@@ -29,45 +30,15 @@ export const KeyTool = {
     const result = await RNPiratechain.deriveViewingKey(seedBytesHex, network)
     return result
   },
-  deriveSpendingKey: async (
-    seedBytesHex: string,
-    network: Network
-  ): Promise<string> => {
-    const result = await RNPiratechain.deriveSpendingKey(seedBytesHex, network)
-    return result
-  },
   getBirthdayHeight: async (host: string, port: number): Promise<number> => {
     const result = await RNPiratechain.getBirthdayHeight(host, port)
     return result
-  }
-}
-
-export const AddressTool = {
-  deriveShieldedAddress: async (
-    viewingKey: string,
-    network: Network
-  ): Promise<string> => {
-    const result = await RNPiratechain.deriveShieldedAddress(
-      viewingKey,
-      network
-    )
-    return result
   },
-  isValidShieldedAddress: async (
+  isValidAddress: async (
     address: string,
     network: Network = 'mainnet'
   ): Promise<boolean> => {
-    const result = await RNPiratechain.isValidShieldedAddress(address, network)
-    return result
-  },
-  isValidTransparentAddress: async (
-    address: string,
-    network: Network = 'mainnet'
-  ): Promise<boolean> => {
-    const result = await RNPiratechain.isValidTransparentAddress(
-      address,
-      network
-    )
+    const result = await RNPiratechain.isValidAddress(address, network)
     return result
   }
 }
@@ -85,11 +56,6 @@ export class Synchronizer {
     this.network = network
   }
 
-  async start(): Promise<String> {
-    const result = await RNPiratechain.start(this.alias)
-    return result
-  }
-
   async stop(): Promise<String> {
     this.unsubscribe()
     const result = await RNPiratechain.stop(this.alias)
@@ -98,8 +64,7 @@ export class Synchronizer {
 
   async initialize(initializerConfig: InitializerConfig): Promise<void> {
     await RNPiratechain.initialize(
-      initializerConfig.fullViewingKey.extfvk,
-      initializerConfig.fullViewingKey.extpub,
+      initializerConfig.mnemonicSeed,
       initializerConfig.birthdayHeight,
       initializerConfig.alias,
       initializerConfig.networkName,
@@ -108,13 +73,18 @@ export class Synchronizer {
     )
   }
 
+  async deriveUnifiedAddress(): Promise<Addresses> {
+    const result = await RNPiratechain.deriveUnifiedAddress(this.alias)
+    return result
+  }
+
   async getLatestNetworkHeight(alias: string): Promise<number> {
     const result = await RNPiratechain.getLatestNetworkHeight(alias)
     return result
   }
 
-  async getShieldedBalance(): Promise<WalletBalance> {
-    const result = await RNPiratechain.getShieldedBalance(this.alias)
+  async getBalance(): Promise<WalletBalance> {
+    const result = await RNPiratechain.getBalance(this.alias)
     return result
   }
 
@@ -127,20 +97,19 @@ export class Synchronizer {
     return result
   }
 
-  rescan(height: number): void {
-    RNPiratechain.rescan(this.alias, height)
+  rescan(): void {
+    RNPiratechain.rescan(this.alias)
   }
 
   async sendToAddress(
     spendInfo: SpendInfo
   ): Promise<SpendSuccess | SpendFailure> {
-    const result = await RNPiratechain.spendToAddress(
+    const result = await RNPiratechain.sendToAddress(
       this.alias,
       spendInfo.zatoshi,
       spendInfo.toAddress,
       spendInfo.memo,
-      spendInfo.fromAccountIndex,
-      spendInfo.spendingKey
+      spendInfo.mnemonicSeed
     )
     return result
   }

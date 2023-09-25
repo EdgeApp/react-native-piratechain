@@ -1,43 +1,29 @@
 package app.edge.rnpiratechain
 
-import com.facebook.react.bridge.*
-import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import pirate.android.sdk.PirateInitializer
-import pirate.android.sdk.PirateSdkSynchronizer
+import pirate.android.sdk.SdkSynchronizer
 import pirate.android.sdk.Synchronizer
-import pirate.android.sdk.db.entity.*
+import pirate.android.sdk.exception.LightWalletException
 import pirate.android.sdk.ext.*
 import pirate.android.sdk.internal.*
-import pirate.android.sdk.internal.service.PirateLightWalletGrpcService
-import pirate.android.sdk.internal.transaction.PiratePagedTransactionRepository
-import pirate.android.sdk.tool.PirateDerivationTool
+import pirate.android.sdk.model.*
+import pirate.android.sdk.tool.DerivationTool
 import pirate.android.sdk.type.*
+import pirate.lightwallet.client.LightWalletClient
+import pirate.lightwallet.client.model.LightWalletEndpoint
+import pirate.lightwallet.client.model.Response
+import pirate.lightwallet.client.new
+import com.facebook.react.bridge.*
+import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
+import kotlinx.coroutines.async
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlin.coroutines.EmptyCoroutineContext
-
-class WalletSynchronizer constructor(val initializer: PirateInitializer) {
-    val synchronizer: PirateSdkSynchronizer =
-        Synchronizer.newBlocking(
-            initializer,
-        ) as PirateSdkSynchronizer
-    val repository =
-        runBlocking {
-            PiratePagedTransactionRepository.new(
-                initializer.context,
-                10,
-                initializer.rustBackend,
-                initializer.birthday,
-                initializer.viewingKeys,
-            )
-        }
-    var isStarted = false
-}
 
 class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
+
     /**
      * Scope for anything that out-lives the synchronizer, meaning anything that can be used before
      * the synchronizer starts or after it stops. Everything else falls within the scope of the
@@ -46,175 +32,149 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
      * In a real production app, we'd use the scope of the parent activity
      */
     var moduleScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
-    var synchronizerMap = mutableMapOf<String, WalletSynchronizer>()
+    var synchronizerMap = mutableMapOf<String, SdkSynchronizer>()
 
     val networks = mapOf("mainnet" to PirateNetwork.Mainnet, "testnet" to PirateNetwork.Testnet)
 
     override fun getName() = "RNPiratechain"
 
     @ReactMethod
-    fun initialize(
-        extfvk: String,
-        extpub: String,
-        birthdayHeight: Int,
-        alias: String,
-        networkName: String = "mainnet",
-        defaultHost: String = "lightd1.pirate.black",
-        defaultPort: Int = 9067,
-        promise: Promise,
-    ) = promise.wrap {
-        Twig.plant(PirateTroubleshootingTwig(formatter = { "@TWIG PIRATE $it" }))
-        var vk = PirateUnifiedViewingKey(extfvk, extpub)
-        if (synchronizerMap[alias] == null) {
-            runBlocking {
-                PirateInitializer.new(reactApplicationContext) {
-                    it.importedWalletBirthday(birthdayHeight)
-                    it.setViewingKeys(vk)
-                    it.setNetwork(
-                        networks[networkName]
-                            ?: PirateNetwork.Mainnet,
-                        defaultHost,
-                        defaultPort,
-                    )
-                    it.alias = alias
-                }
-            }.let { initializer ->
-                synchronizerMap[alias] = WalletSynchronizer(initializer)
-            }
-        }
-        val wallet = getWallet(alias)
-        wallet.synchronizer.hashCode().toString()
-    }
-
-    @ReactMethod
-    fun start(
-        alias: String,
-        promise: Promise,
-    ) = promise.wrap {
-        val wallet = getWallet(alias)
-        if (!wallet.isStarted) {
-            runBlocking {
-                wallet.synchronizer.prepare()
-            }
-            wallet.synchronizer.start(moduleScope)
-            val scope = wallet.synchronizer.coroutineScope
-            wallet.synchronizer.processorInfo.collectWith(scope, { update ->
-                sendEvent("UpdateEvent") { args ->
-                    args.putString("alias", alias)
-                    args.putInt("lastDownloadedHeight", update.lastDownloadedHeight)
-                    args.putInt("lastScannedHeight", update.lastScannedHeight)
-                    args.putInt("scanProgress", update.scanProgress)
-                    args.putInt("networkBlockHeight", update.networkBlockHeight)
-                }
-            })
-            wallet.synchronizer.status.collectWith(scope, { status ->
-                sendEvent("StatusEvent") { args ->
-                    args.putString("alias", alias)
-                    args.putString("name", status.toString())
-                }
-            })
-            wallet.synchronizer.saplingBalances.collectWith(scope, { walletBalance ->
-                sendEvent("BalanceEvent") { args ->
-                    args.putString("alias", alias)
-                    args.putString("availableZatoshi", walletBalance.availableZatoshi.toString())
-                    args.putString("totalZatoshi", walletBalance.totalZatoshi.toString())
-                }
-            })
-            // add 'distinctUntilChanged' to filter by events that represent changes in txs, rather than each poll
-            wallet.synchronizer.clearedTransactions.distinctUntilChanged().collectWith(scope, { txList ->
-                sendEvent("TransactionEvent") { args ->
-                    args.putString("alias", alias)
-                    args.putBoolean("hasChanged", true)
-                    args.putInt("transactionCount", txList.count())
-                }
-            })
-            wallet.isStarted = true
-        }
-        "success"
-    }
-
-    @ReactMethod
-    fun stop(
-        alias: String,
-        promise: Promise,
-    ) = promise.wrap {
-        val wallet = getWallet(alias)
-        wallet.synchronizer.stop()
-        synchronizerMap.remove(alias)
-        "success"
-    }
-
-    @ReactMethod
-    fun getTransactions(
-        alias: String,
-        first: Int,
-        last: Int,
-        promise: Promise,
-    ) {
-        val wallet = getWallet(alias)
+    fun initialize(seed: String, birthdayHeight: Int, alias: String, networkName: String = "mainnet", defaultHost: String = "mainnet.lightwalletd.com", defaultPort: Int = 9067, promise: Promise) =
         moduleScope.launch {
             promise.wrap {
-                val result = wallet.repository.findNewTransactions(first..last)
-                val nativeArray = Arguments.createArray()
-
-                for (i in 0..result.size - 1) {
-                    val map = Arguments.createMap()
-                    map.putString("value", result[i].value.toString())
-                    map.putInt("minedHeight", result[i].minedHeight)
-                    map.putInt("blockTimeInSeconds", result[i].blockTimeInSeconds.toInt())
-                    map.putString("rawTransactionId", result[i].rawTransactionId.toHexReversed())
-                    if (result[i].memo != null) map.putString("memo", result[i].memo?.decodeToString()?.trim('\u0000', '\uFFFD'))
-                    if (result[i].toAddress != null) map.putString("toAddress", result[i].toAddress)
-                    nativeArray.pushMap(map)
+                var network = networks.getOrDefault(networkName, PirateNetwork.Mainnet)
+                var endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
+                var seedPhrase = SeedPhrase.new(seed)
+                if (!synchronizerMap.containsKey(alias)) {
+                    synchronizerMap.set(alias, Synchronizer.new(reactApplicationContext, network, alias, endpoint, seedPhrase.toByteArray(), BlockHeight.new(network, birthdayHeight.toLong())) as SdkSynchronizer)
                 }
+                val wallet = getWallet(alias)
+                val scope = wallet.coroutineScope
+                wallet.processorInfo.collectWith(scope, { update ->
+                    scope.launch {
+                        var lastDownloadedHeight = this.async { wallet.processor.downloader.getLastDownloadedHeight() }.await()
+                        if (lastDownloadedHeight == null) lastDownloadedHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
 
-                nativeArray
+                        var lastScannedHeight = update.lastSyncedHeight
+                        if (lastScannedHeight == null) lastScannedHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
+
+                        var networkBlockHeight = update.networkBlockHeight
+                        if (networkBlockHeight == null) networkBlockHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
+
+                        sendEvent("UpdateEvent") { args ->
+                            args.putString("alias", alias)
+                            args.putInt("lastDownloadedHeight", lastDownloadedHeight.value.toInt())
+                            args.putInt("lastScannedHeight", lastScannedHeight.value.toInt())
+                            args.putInt("scanProgress", wallet.processor.progress.value.toPercentage())
+                            args.putInt("networkBlockHeight", networkBlockHeight.value.toInt())
+                        }
+                    }
+                })
+                wallet.status.collectWith(scope, { status ->
+                    sendEvent("StatusEvent") { args ->
+                        args.putString("alias", alias)
+                        args.putString("name", status.toString())
+                    }
+                })
+                return@wrap null
             }
         }
-    }
 
     @ReactMethod
-    fun rescan(
-        alias: String,
-        height: Int,
-        promise: Promise,
-    ) {
+    fun stop(alias: String, promise: Promise) {
         val wallet = getWallet(alias)
-        moduleScope.launch {
-            wallet.synchronizer.rewindToNearestHeight(height)
+        wallet.close()
+        synchronizerMap.remove(alias)
+        promise.resolve(null)
+    }
+
+    fun inRange(tx: TransactionOverview, first: Int, last: Int): Boolean {
+        if (tx.minedHeight != null && tx.minedHeight!!.value >= first.toLong() && tx.minedHeight!!.value <= last.toLong()) {
+            return true
+        }
+        return false
+    }
+
+    suspend fun collectTxs(wallet: SdkSynchronizer, limit: Int): List<TransactionOverview> {
+        val allTxs = mutableListOf<TransactionOverview>()
+        val job = wallet.coroutineScope.launch {
+            wallet.transactions.collect { txList ->
+                txList.forEach { tx ->
+                    allTxs.add(tx)
+                }
+                if (allTxs.size == limit) {
+                    cancel()
+                }
+            }
+        }
+        job.join()
+
+        return allTxs
+    }
+
+    suspend fun parseTx(wallet: SdkSynchronizer, tx: TransactionOverview): WritableMap {
+        val map = Arguments.createMap()
+        val job = wallet.coroutineScope.launch {
+            map.putString("value", tx.netValue.value.toString())
+            map.putInt("minedHeight", tx.minedHeight!!.value.toInt())
+            map.putInt("blockTimeInSeconds", tx.blockTimeEpochSeconds.toInt())
+            map.putString("rawTransactionId", tx.rawId.byteArray.toHexReversed())
+            if (tx.isSentTransaction) {
+                val recipient = wallet.getRecipients(tx).first()
+                if (recipient is TransactionRecipient.Address) {
+                    map.putString("toAddress", recipient.addressValue)
+                }
+            }
+            if (tx.memoCount > 0) {
+                val memos = wallet.getMemos(tx).take(tx.memoCount).toList()
+                map.putArray("memos", Arguments.fromList(memos))
+            } else {
+                map.putArray("memos", Arguments.createArray())
+            }
+        }
+        job.join()
+        return map
+    }
+
+    @ReactMethod
+    fun getTransactions(alias: String, first: Int, last: Int, promise: Promise) {
+        val wallet = getWallet(alias)
+
+        wallet.coroutineScope.launch {
+            val numTxs = async { wallet.getTransactionCount() }.await()
+            val nativeArray = Arguments.createArray()
+            if (numTxs == 0) {
+                promise.resolve(nativeArray)
+                return@launch
+            }
+
+            val allTxs = async { collectTxs(wallet, numTxs) }.await()
+            val filteredTxs = allTxs.filter { tx -> inRange(tx, first, last) }
+
+            filteredTxs.map { tx -> launch {
+                val parsedTx = parseTx(wallet, tx)
+                nativeArray.pushMap(parsedTx)
+            } }.forEach { it.join() }
+
+            promise.resolve(nativeArray)
         }
     }
 
     @ReactMethod
-    fun deriveViewingKey(
-        seedBytesHex: String,
-        network: String = "mainnet",
-        promise: Promise,
-    ) {
-        var keys =
-            runBlocking {
-                PirateDerivationTool.derivePirateUnifiedViewingKeys(
-                    seedBytesHex.fromHex(),
-                    networks.getOrDefault(network, PirateNetwork.Mainnet),
-                )[0]
-            }
-        val map = Arguments.createMap()
-        map.putString("extfvk", keys.extfvk)
-        map.putString("extpub", keys.extpub)
-        promise.resolve(map)
+    fun rescan(alias: String, promise: Promise) {
+        val wallet = getWallet(alias)
+        wallet.coroutineScope.launch {
+            wallet.coroutineScope.async { wallet.rewindToNearestHeight(wallet.latestBirthdayHeight, true) }.await()
+            promise.resolve(null)
+        }
     }
 
     @ReactMethod
-    fun deriveSpendingKey(
-        seedBytesHex: String,
-        network: String = "mainnet",
-        promise: Promise,
-    ) = promise.wrap {
-        runBlocking {
-            PirateDerivationTool.deriveSpendingKeys(
-                seedBytesHex.fromHex(),
-                networks.getOrDefault(network, PirateNetwork.Mainnet),
-            )[0]
+    fun deriveViewingKey(seed: String, network: String = "mainnet", promise: Promise) {
+        var seedPhrase = SeedPhrase.new(seed)
+        moduleScope.launch {
+            var keys = moduleScope.async { DerivationTool.getInstance().deriveUnifiedFullViewingKeys(seedPhrase.toByteArray(), networks.getOrDefault(network, PirateNetwork.Mainnet), DerivationTool.DEFAULT_NUMBER_OF_ACCOUNTS)[0] }.await()
+            promise.resolve(keys.encoding)
         }
     }
 
@@ -223,72 +183,87 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     //
 
     @ReactMethod
-    fun getLatestNetworkHeight(
-        alias: String,
-        promise: Promise,
-    ) = promise.wrap {
+    fun getLatestNetworkHeight(alias: String, promise: Promise) = promise.wrap {
         val wallet = getWallet(alias)
-        wallet.synchronizer.latestHeight
+        return@wrap wallet.latestHeight
     }
 
     @ReactMethod
-    fun getBirthdayHeight(
-        host: String,
-        port: Int,
-        promise: Promise,
-    ) = promise.wrap {
-        var lightwalletService = PirateLightWalletGrpcService(reactApplicationContext, host, port)
-        val height = lightwalletService?.getLatestBlockHeight()
-        lightwalletService?.shutdown()
-        height
+    fun getBirthdayHeight(host: String, port: Int, promise: Promise) {
+        moduleScope.launch {
+            promise.wrap {
+                var endpoint = LightWalletEndpoint(host, port, true)
+                var lightwalletService = LightWalletClient.new(reactApplicationContext, endpoint)
+                return@wrap when (val response = lightwalletService.getLatestBlockHeight()) {
+                    is Response.Success -> {
+                        response.result.value.toInt()
+                    }
+
+                    is Response.Failure -> {
+                        throw LightWalletException.DownloadBlockException(
+                            response.code,
+                            response.description,
+                            response.toThrowable(),
+                        )
+                    }
+                }
+            }
+        }
     }
 
     @ReactMethod
-    fun getShieldedBalance(
-        alias: String,
-        promise: Promise,
-    ) = promise.wrap {
+    fun getBalance(alias: String, promise: Promise) {
         val wallet = getWallet(alias)
-        val map = Arguments.createMap()
-        map.putString("totalZatoshi", wallet.synchronizer.saplingBalances.value.totalZatoshi.toString(10))
-        map.putString("availableZatoshi", wallet.synchronizer.saplingBalances.value.availableZatoshi.toString(10))
-        map
+        var availableZatoshi = Arrrtoshi(0L)
+        var totalZatoshi = Arrrtoshi(0L)
+
+        wallet.coroutineScope.launch {
+            wallet.coroutineScope.async { wallet.refreshAllBalances() }.await()
+
+            val transparentBalances = wallet.transparentBalances.value
+            availableZatoshi = availableZatoshi.plus(transparentBalances?.available ?: Arrrtoshi(0L))
+            totalZatoshi = totalZatoshi.plus(transparentBalances?.total ?: Arrrtoshi(0L))
+            val saplingBalances = wallet.saplingBalances.value
+            availableZatoshi = availableZatoshi.plus(saplingBalances?.available ?: Arrrtoshi(0L))
+            totalZatoshi = totalZatoshi.plus(saplingBalances?.total ?: Arrrtoshi(0L))
+            val orchardBalances = wallet.orchardBalances.value
+            availableZatoshi = availableZatoshi.plus(orchardBalances?.available ?: Arrrtoshi(0L))
+            totalZatoshi = totalZatoshi.plus(orchardBalances?.total ?: Arrrtoshi(0L))
+
+            val map = Arguments.createMap()
+            map.putString("totalZatoshi", totalZatoshi.value.toString())
+            map.putString("availableZatoshi", availableZatoshi.value.toString())
+            promise.resolve(map)
+        }
     }
 
     @ReactMethod
-    fun spendToAddress(
+    fun sendToAddress(
         alias: String,
         zatoshi: String,
         toAddress: String,
-        memo: String,
-        fromAccountIndex: Int,
-        spendingKey: String,
+        memo: String = "",
+        seed: String,
         promise: Promise,
     ) {
         val wallet = getWallet(alias)
-        wallet.synchronizer.coroutineScope.launch {
+        wallet.coroutineScope.launch {
+            var seedPhrase = SeedPhrase.new(seed)
+            val usk = wallet.coroutineScope.async { DerivationTool.getInstance().deriveUnifiedSpendingKey(seedPhrase.toByteArray(), wallet.network, Account.DEFAULT) }.await()
             try {
-                wallet.synchronizer.sendToAddress(
-                    spendingKey,
-                    zatoshi.toLong(),
+                val internalId = wallet.sendToAddress(
+                    usk,
+                    Arrrtoshi(zatoshi.toLong()),
                     toAddress,
                     memo,
-                    fromAccountIndex,
-                ).collectWith(wallet.synchronizer.coroutineScope) { tx ->
-                    // this block is called repeatedly for each update to the pending transaction, including all 10 confirmations
-                    // the promise either shouldn't be used (and rely on events instead) or it can be resolved once the transaction is submitted to the network or mined
-                    if (tx.isSubmitSuccess()) { // alternatively use it.isMined() but be careful about making a promise that never resolves!
-                        val map = Arguments.createMap()
-                        map.putString("txId", tx.rawTransactionId?.toHexReversed())
-                        map.putString("raw", tx.raw?.toHexReversed())
-                        promise.resolve(map)
-                    } else if (tx.isFailure()) {
-                        val map = Arguments.createMap()
-                        if (tx.errorMessage != null) map.putString("errorMessage", tx.errorMessage)
-                        if (tx.errorCode != null) map.putString("errorCode", tx.errorCode.toString())
-                        promise.resolve(map)
-                    }
-                }
+                )
+                val tx = wallet.coroutineScope.async { wallet.transactions.flatMapConcat { list -> flowOf(*list.toTypedArray()) } }.await().firstOrNull { item -> item.id == internalId }
+                if (tx == null) throw Exception("transaction failed")
+
+                val map = Arguments.createMap()
+                map.putString("txId", tx.rawId.byteArray.toHexReversed())
+                if (tx.raw != null) map.putString("raw", tx.raw?.byteArray?.toHex())
+                promise.resolve(map)
             } catch (t: Throwable) {
                 promise.reject("Err", t)
             }
@@ -300,52 +275,34 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     //
 
     @ReactMethod
-    fun deriveShieldedAddress(
-        viewingKey: String,
-        network: String = "mainnet",
-        promise: Promise,
-    ) = promise.wrap {
-        runBlocking { PirateDerivationTool.deriveShieldedAddress(viewingKey, networks.getOrDefault(network, PirateNetwork.Mainnet)) }
-    }
+    fun deriveUnifiedAddress(alias: String, promise: Promise) {
+        val wallet = getWallet(alias)
+        wallet.coroutineScope.launch {
+                var unifiedAddress = wallet.coroutineScope.async { wallet.getUnifiedAddress(Account(0)) }.await()
+                val saplingAddress = wallet.coroutineScope.async { wallet.getSaplingAddress(Account(0)) }.await()
+                val transparentAddress = wallet.coroutineScope.async { wallet.getTransparentAddress(Account(0)) }.await()
 
-    @ReactMethod
-    fun isValidShieldedAddress(
-        address: String,
-        network: String,
-        promise: Promise,
-    ) {
-        moduleScope.launch {
-            promise.wrap {
-                var isValid = false
-                val wallets = synchronizerMap.asIterable()
-                for (wallet in wallets) {
-                    if (wallet.value.synchronizer.network.networkName == network) {
-                        isValid = wallet.value.synchronizer.isValidShieldedAddr(address)
-                        break
-                    }
-                }
-                isValid
-            }
+                val map = Arguments.createMap()
+                map.putString("unifiedAddress", unifiedAddress)
+                map.putString("saplingAddress", saplingAddress)
+                map.putString("transparentAddress", transparentAddress)
+                promise.resolve(map)
         }
     }
 
     @ReactMethod
-    fun isValidTransparentAddress(
-        address: String,
-        network: String,
-        promise: Promise,
-    ) {
+    fun isValidAddress(address: String, network: String, promise: Promise) {
         moduleScope.launch {
             promise.wrap {
                 var isValid = false
                 val wallets = synchronizerMap.asIterable()
                 for (wallet in wallets) {
-                    if (wallet.value.synchronizer.network.networkName == network) {
-                        isValid = wallet.value.synchronizer.isValidTransparentAddr(address)
+                    if (wallet.value.network.networkName == network) {
+                        isValid = wallet.value.isValidAddress(address)
                         break
                     }
                 }
-                isValid
+                return@wrap isValid
             }
         }
     }
@@ -357,7 +314,7 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     /**
      * Retrieve wallet object from synchronizer map
      */
-    private fun getWallet(alias: String): WalletSynchronizer {
+    private fun getWallet(alias: String): SdkSynchronizer {
         val wallet = synchronizerMap.get(alias)
         if (wallet == null) throw Exception("Wallet not found")
         return wallet
@@ -374,10 +331,7 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
         }
     }
 
-    private fun sendEvent(
-        eventName: String,
-        putArgs: (WritableMap) -> Unit,
-    ) {
+    private fun sendEvent(eventName: String, putArgs: (WritableMap) -> Unit) {
         val args = Arguments.createMap()
         putArgs(args)
         reactApplicationContext
