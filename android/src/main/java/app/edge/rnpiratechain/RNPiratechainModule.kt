@@ -278,14 +278,14 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     fun deriveUnifiedAddress(alias: String, promise: Promise) {
         val wallet = getWallet(alias)
         wallet.coroutineScope.launch {
-                var unifiedAddress = wallet.coroutineScope.async { wallet.getUnifiedAddress(Account(0)) }.await()
+                // var unifiedAddress = wallet.coroutineScope.async { wallet.getUnifiedAddress(Account(0)) }.await()
                 val saplingAddress = wallet.coroutineScope.async { wallet.getSaplingAddress(Account(0)) }.await()
-                val transparentAddress = wallet.coroutineScope.async { wallet.getTransparentAddress(Account(0)) }.await()
+                // val transparentAddress = wallet.coroutineScope.async { wallet.getTransparentAddress(Account(0)) }.await()
 
                 val map = Arguments.createMap()
-                map.putString("unifiedAddress", unifiedAddress)
+                // map.putString("unifiedAddress", unifiedAddress)
                 map.putString("saplingAddress", saplingAddress)
-                map.putString("transparentAddress", transparentAddress)
+                // map.putString("transparentAddress", transparentAddress)
                 promise.resolve(map)
         }
     }

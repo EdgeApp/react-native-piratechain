@@ -404,13 +404,13 @@ class RNPiratechain: RCTEventEmitter {
     Task {
       if let wallet = SynchronizerMap[alias] {
         do {
-          let unifiedAddress = try await wallet.synchronizer.getUnifiedAddress(accountIndex: 0)
+          // let unifiedAddress = try await wallet.synchronizer.getUnifiedAddress(accountIndex: 0)
           let saplingAddress = try await wallet.synchronizer.getSaplingAddress(accountIndex: 0)
-          let transparentAddress = try await wallet.synchronizer.getTransparentAddress(accountIndex: 0)
+          // let transparentAddress = try await wallet.synchronizer.getTransparentAddress(accountIndex: 0)
           let addresses: NSDictionary = [
-            "unifiedAddress": unifiedAddress.stringEncoded,
-            "saplingAddress": saplingAddress.stringEncoded,
-            "transparentAddress": transparentAddress.stringEncoded
+            // "unifiedAddress": unifiedAddress.stringEncoded,
+            "saplingAddress": saplingAddress.stringEncoded
+            // "transparentAddress": transparentAddress.stringEncoded
           ]
           resolve(addresses)
           return

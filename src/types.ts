@@ -83,7 +83,7 @@ export interface ConfirmedTransaction {
 }
 
 export interface Addresses {
-  unifiedAddress: string
+  // unifiedAddress: string
   saplingAddress: string
-  transparentAddress: string
+  // transparentAddress: string
 }
