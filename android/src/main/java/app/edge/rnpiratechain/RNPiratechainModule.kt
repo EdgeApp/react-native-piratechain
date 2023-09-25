@@ -1,36 +1,43 @@
-package app.edge.rnpiratechain;
+package app.edge.rnpiratechain
 
-import pirate.android.sdk.PirateInitializer
-import pirate.android.sdk.PirateSdkSynchronizer
-import pirate.android.sdk.Synchronizer
-import pirate.android.sdk.db.entity.*
-import pirate.android.sdk.ext.*
-import pirate.android.sdk.internal.service.PirateLightWalletGrpcService
-import pirate.android.sdk.internal.transaction.PiratePagedTransactionRepository
-import pirate.android.sdk.internal.*
-import pirate.android.sdk.type.*
-import pirate.android.sdk.tool.PirateDerivationTool
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.nio.charset.StandardCharsets
+import pirate.android.sdk.PirateInitializer
+import pirate.android.sdk.PirateSdkSynchronizer
+import pirate.android.sdk.Synchronizer
+import pirate.android.sdk.db.entity.*
+import pirate.android.sdk.ext.*
+import pirate.android.sdk.internal.*
+import pirate.android.sdk.internal.service.PirateLightWalletGrpcService
+import pirate.android.sdk.internal.transaction.PiratePagedTransactionRepository
+import pirate.android.sdk.tool.PirateDerivationTool
+import pirate.android.sdk.type.*
 import kotlin.coroutines.EmptyCoroutineContext
 
-class WalletSynchronizer constructor(val initializer: PirateInitializer)  {
-
-    val synchronizer: PirateSdkSynchronizer = Synchronizer.newBlocking(
-        initializer
-    ) as PirateSdkSynchronizer
-    val repository = runBlocking { PiratePagedTransactionRepository.new(initializer.context, 10, initializer.rustBackend, initializer.birthday, initializer.viewingKeys) }
+class WalletSynchronizer constructor(val initializer: PirateInitializer) {
+    val synchronizer: PirateSdkSynchronizer =
+        Synchronizer.newBlocking(
+            initializer,
+        ) as PirateSdkSynchronizer
+    val repository =
+        runBlocking {
+            PiratePagedTransactionRepository.new(
+                initializer.context,
+                10,
+                initializer.rustBackend,
+                initializer.birthday,
+                initializer.viewingKeys,
+            )
+        }
     var isStarted = false
 }
 
 class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
-
     /**
      * Scope for anything that out-lives the synchronizer, meaning anything that can be used before
      * the synchronizer starts or after it stops. Everything else falls within the scope of the
@@ -46,33 +53,48 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     override fun getName() = "RNPiratechain"
 
     @ReactMethod
-    fun initialize(extfvk: String, extpub: String, birthdayHeight: Int, alias: String, networkName: String = "mainnet", defaultHost: String = "lightd1.pirate.black", defaultPort: Int = 9067, promise: Promise) =
-        promise.wrap {
-          Twig.plant(PirateTroubleshootingTwig(formatter = { "@TWIG PIRATE $it" }))
-          var vk = PirateUnifiedViewingKey(extfvk, extpub)
-          if (synchronizerMap[alias] == null) {
+    fun initialize(
+        extfvk: String,
+        extpub: String,
+        birthdayHeight: Int,
+        alias: String,
+        networkName: String = "mainnet",
+        defaultHost: String = "lightd1.pirate.black",
+        defaultPort: Int = 9067,
+        promise: Promise,
+    ) = promise.wrap {
+        Twig.plant(PirateTroubleshootingTwig(formatter = { "@TWIG PIRATE $it" }))
+        var vk = PirateUnifiedViewingKey(extfvk, extpub)
+        if (synchronizerMap[alias] == null) {
             runBlocking {
-              PirateInitializer.new(reactApplicationContext) {
-                it.importedWalletBirthday(birthdayHeight)
-                it.setViewingKeys(vk)
-                it.setNetwork(networks[networkName]
-                  ?: PirateNetwork.Mainnet, defaultHost, defaultPort)
-                it.alias = alias
-              }
+                PirateInitializer.new(reactApplicationContext) {
+                    it.importedWalletBirthday(birthdayHeight)
+                    it.setViewingKeys(vk)
+                    it.setNetwork(
+                        networks[networkName]
+                            ?: PirateNetwork.Mainnet,
+                        defaultHost,
+                        defaultPort,
+                    )
+                    it.alias = alias
+                }
             }.let { initializer ->
-              synchronizerMap[alias] = WalletSynchronizer(initializer)
+                synchronizerMap[alias] = WalletSynchronizer(initializer)
             }
-          }
-          val wallet = getWallet(alias)
-          wallet.synchronizer.hashCode().toString()
         }
+        val wallet = getWallet(alias)
+        wallet.synchronizer.hashCode().toString()
+    }
 
     @ReactMethod
-    fun start(alias: String, promise: Promise) = promise.wrap {
+    fun start(
+        alias: String,
+        promise: Promise,
+    ) = promise.wrap {
         val wallet = getWallet(alias)
         if (!wallet.isStarted) {
             runBlocking {
-              wallet.synchronizer.prepare()
+                wallet.synchronizer.prepare()
             }
             wallet.synchronizer.start(moduleScope)
             val scope = wallet.synchronizer.coroutineScope
@@ -112,7 +134,10 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun stop(alias: String, promise: Promise) = promise.wrap {
+    fun stop(
+        alias: String,
+        promise: Promise,
+    ) = promise.wrap {
         val wallet = getWallet(alias)
         wallet.synchronizer.stop()
         synchronizerMap.remove(alias)
@@ -120,7 +145,12 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun getTransactions(alias: String, first: Int, last: Int, promise: Promise) {
+    fun getTransactions(
+        alias: String,
+        first: Int,
+        last: Int,
+        promise: Promise,
+    ) {
         val wallet = getWallet(alias)
         moduleScope.launch {
             promise.wrap {
@@ -144,7 +174,11 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun rescan(alias: String, height: Int, promise: Promise) {
+    fun rescan(
+        alias: String,
+        height: Int,
+        promise: Promise,
+    ) {
         val wallet = getWallet(alias)
         moduleScope.launch {
             wallet.synchronizer.rewindToNearestHeight(height)
@@ -152,8 +186,18 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun deriveViewingKey(seedBytesHex: String, network: String = "mainnet", promise: Promise) {
-        var keys = runBlocking { PirateDerivationTool.derivePirateUnifiedViewingKeys(seedBytesHex.fromHex(), networks.getOrDefault(network, PirateNetwork.Mainnet))[0] }
+    fun deriveViewingKey(
+        seedBytesHex: String,
+        network: String = "mainnet",
+        promise: Promise,
+    ) {
+        var keys =
+            runBlocking {
+                PirateDerivationTool.derivePirateUnifiedViewingKeys(
+                    seedBytesHex.fromHex(),
+                    networks.getOrDefault(network, PirateNetwork.Mainnet),
+                )[0]
+            }
         val map = Arguments.createMap()
         map.putString("extfvk", keys.extfvk)
         map.putString("extpub", keys.extpub)
@@ -161,23 +205,38 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun deriveSpendingKey(seedBytesHex: String, network: String = "mainnet", promise: Promise) = promise.wrap {
-        runBlocking { PirateDerivationTool.deriveSpendingKeys(seedBytesHex.fromHex(), networks.getOrDefault(network, PirateNetwork.Mainnet))[0] }
+    fun deriveSpendingKey(
+        seedBytesHex: String,
+        network: String = "mainnet",
+        promise: Promise,
+    ) = promise.wrap {
+        runBlocking {
+            PirateDerivationTool.deriveSpendingKeys(
+                seedBytesHex.fromHex(),
+                networks.getOrDefault(network, PirateNetwork.Mainnet),
+            )[0]
+        }
     }
 
     //
     // Properties
     //
 
-
     @ReactMethod
-    fun getLatestNetworkHeight(alias: String, promise: Promise) = promise.wrap {
+    fun getLatestNetworkHeight(
+        alias: String,
+        promise: Promise,
+    ) = promise.wrap {
         val wallet = getWallet(alias)
         wallet.synchronizer.latestHeight
     }
 
     @ReactMethod
-    fun getBirthdayHeight(host: String, port: Int, promise: Promise) = promise.wrap {
+    fun getBirthdayHeight(
+        host: String,
+        port: Int,
+        promise: Promise,
+    ) = promise.wrap {
         var lightwalletService = PirateLightWalletGrpcService(reactApplicationContext, host, port)
         val height = lightwalletService?.getLatestBlockHeight()
         lightwalletService?.shutdown()
@@ -185,7 +244,10 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun getShieldedBalance(alias: String, promise: Promise) = promise.wrap {
+    fun getShieldedBalance(
+        alias: String,
+        promise: Promise,
+    ) = promise.wrap {
         val wallet = getWallet(alias)
         val map = Arguments.createMap()
         map.putString("totalZatoshi", wallet.synchronizer.saplingBalances.value.totalZatoshi.toString(10))
@@ -201,7 +263,7 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
         memo: String,
         fromAccountIndex: Int,
         spendingKey: String,
-        promise: Promise
+        promise: Promise,
     ) {
         val wallet = getWallet(alias)
         wallet.synchronizer.coroutineScope.launch {
@@ -211,8 +273,8 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
                     zatoshi.toLong(),
                     toAddress,
                     memo,
-                    fromAccountIndex
-                ).collectWith(wallet.synchronizer.coroutineScope) {tx ->
+                    fromAccountIndex,
+                ).collectWith(wallet.synchronizer.coroutineScope) { tx ->
                     // this block is called repeatedly for each update to the pending transaction, including all 10 confirmations
                     // the promise either shouldn't be used (and rely on events instead) or it can be resolved once the transaction is submitted to the network or mined
                     if (tx.isSubmitSuccess()) { // alternatively use it.isMined() but be careful about making a promise that never resolves!
@@ -231,7 +293,6 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
                 promise.reject("Err", t)
             }
         }
-
     }
 
     //
@@ -239,40 +300,52 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     //
 
     @ReactMethod
-    fun deriveShieldedAddress(viewingKey: String, network: String = "mainnet", promise: Promise) = promise.wrap {
+    fun deriveShieldedAddress(
+        viewingKey: String,
+        network: String = "mainnet",
+        promise: Promise,
+    ) = promise.wrap {
         runBlocking { PirateDerivationTool.deriveShieldedAddress(viewingKey, networks.getOrDefault(network, PirateNetwork.Mainnet)) }
     }
 
     @ReactMethod
-    fun isValidShieldedAddress(address: String, network: String, promise: Promise) {
+    fun isValidShieldedAddress(
+        address: String,
+        network: String,
+        promise: Promise,
+    ) {
         moduleScope.launch {
             promise.wrap {
                 var isValid = false
                 val wallets = synchronizerMap.asIterable()
-            for (wallet in wallets) {
-                if (wallet.value.synchronizer.network.networkName == network) {
-                  isValid = wallet.value.synchronizer.isValidShieldedAddr(address)
-                  break
+                for (wallet in wallets) {
+                    if (wallet.value.synchronizer.network.networkName == network) {
+                        isValid = wallet.value.synchronizer.isValidShieldedAddr(address)
+                        break
+                    }
                 }
-              }
-              isValid
+                isValid
             }
         }
     }
 
     @ReactMethod
-    fun isValidTransparentAddress(address: String, network: String, promise: Promise) {
+    fun isValidTransparentAddress(
+        address: String,
+        network: String,
+        promise: Promise,
+    ) {
         moduleScope.launch {
             promise.wrap {
-              var isValid = false
-              val wallets = synchronizerMap.asIterable()
-              for (wallet in wallets) {
-                if (wallet.value.synchronizer.network.networkName == network) {
-                  isValid = wallet.value.synchronizer.isValidTransparentAddr(address)
-                  break
+                var isValid = false
+                val wallets = synchronizerMap.asIterable()
+                for (wallet in wallets) {
+                    if (wallet.value.synchronizer.network.networkName == network) {
+                        isValid = wallet.value.synchronizer.isValidTransparentAddr(address)
+                        break
+                    }
                 }
-              }
-              isValid
+                isValid
             }
         }
     }
@@ -290,7 +363,6 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
         return wallet
     }
 
-
     /**
      * Wrap the given block of logic in a promise, rejecting for any error.
      */
@@ -302,7 +374,10 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
         }
     }
 
-    private fun sendEvent(eventName: String, putArgs: (WritableMap) -> Unit) {
+    private fun sendEvent(
+        eventName: String,
+        putArgs: (WritableMap) -> Unit,
+    ) {
         val args = Arguments.createMap()
         putArgs(args)
         reactApplicationContext
@@ -311,10 +386,10 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     }
 
     inline fun ByteArray.toHexReversed(): String {
-      val sb = StringBuilder(size * 2)
-      var i = size - 1
-      while (i >= 0)
-        sb.append(String.format("%02x", this[i--]))
-      return sb.toString()
+        val sb = StringBuilder(size * 2)
+        var i = size - 1
+        while (i >= 0)
+            sb.append(String.format("%02x", this[i--]))
+        return sb.toString()
     }
 }
