@@ -36,11 +36,11 @@ const networks: { [pluginId: string]: Options } = {
       __dirname,
       '../android/src/main/assets/piratesaplingtree/mainnet/'
     ),
-    serverUrl: 'lightd1.pirate.black:9067',
+    serverUrl: 'piratelightd1.cryptoforge.cc:443',
     packagePath: 'pirate.wallet.sdk.rpc',
     lastSdkCheckpointHeight: 2040000,
     blockTimeSeconds: 60,
-    ssl: false
+    ssl: true
   }
 }
 
@@ -66,9 +66,11 @@ const createClient = (opts: Options): any => {
 }
 
 const writeCheckpoint = (path: string, json: any): void => {
-  const newCheckpoint = { ...json, tree: json.saplingTree }
-  delete newCheckpoint.saplingTree
-  delete newCheckpoint.orchardTree
+  const newCheckpoint = { ...json }
+  // Remove any null values
+  for (const [key, value] of Object.entries(newCheckpoint)) {
+    if (value === '') delete newCheckpoint[key]
+  }
 
   fs.writeFileSync(
     `${path}/${json.height}.json`,
