@@ -126,8 +126,12 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
                 }
             }
             if (tx.memoCount > 0) {
-                val memos = wallet.getMemos(tx).take(tx.memoCount).toList()
-                map.putArray("memos", Arguments.fromList(memos))
+                try {
+                    val memos = wallet.getMemos(tx).take(tx.memoCount).toList()
+                    map.putArray("memos", Arguments.fromList(memos))
+                } catch (t: Throwable) {
+                    // We can ignore these errors
+                }
             } else {
                 map.putArray("memos", Arguments.createArray())
             }
