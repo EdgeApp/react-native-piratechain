@@ -25,14 +25,14 @@ function downloadSources(): void {
   getRepo(
     'PirateLightClientKit',
     'https://github.com/PirateNetwork/PirateLightClientKit.git',
-    // 0.14.3-beta:
-    'f939db082643d73cead7172da0a862f3b3df34a9'
+    // 0.22.0-beta:
+    'e98ba08515e09cdd7221ac875226a8c4565dbdc5'
   )
   getRepo(
     'pirate-light-client-ffi',
     'https://github.com/PirateNetwork/pirate-light-client-ffi.git',
-    // 0.0.5:
-    '21ac7b770f705b96f477c88378c51ba0279f9a25'
+    // 0.3.1:
+    'b07e6fb619a8f0eadd344f4e0d3e81d8a7a0a33a'
   )
 }
 
@@ -110,6 +110,7 @@ async function copySwift(): Promise<void> {
         'Bundle.module.bundleURL.appendingPathComponent("piratesaplingtree-checkpoints/testnet/")',
         'Bundle.main.url(forResource: "piratechain-testnet", withExtension: "bundle")!'
       )
+      .replace(/static let macOS = BundleCheckpointURLProvider.*}\)/s, '')
 
     await toDisklet.setText(file, fixed)
   }
