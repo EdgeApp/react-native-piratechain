@@ -1,5 +1,12 @@
 # React Native Piratechain
 
+## 0.4.0 (2023-10-09)
+
+- changed: Upgrade pirate-android-sdk to v1.19.0-beta01
+- changed: Upgrade PirateLightClientKit to v0.19.0-beta
+- changed: Repackage `KoyTool` and `AddressTool` methods synchronizer-independent `Tools`
+- changed: Always return memos array with transactions
+
 ## 0.3.5 (2023-08-17)
 
 - fixed: Update our default Kotlin version to be compatible with React Native v0.72.
