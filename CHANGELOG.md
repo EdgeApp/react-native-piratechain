@@ -1,5 +1,9 @@
 # React Native Piratechain
 
+## 0.4.1 (2023-11-03)
+
+- changed: Updated chackpoints
+
 ## 0.4.0 (2023-10-09)
 
 - changed: Upgrade pirate-android-sdk to v1.19.0-beta01
