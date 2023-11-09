@@ -1,5 +1,9 @@
 # React Native Piratechain
 
+## Unreleased
+
+- fixed: (Android) Make sure parseTx always returns a `memos` field
+
 ## 0.4.1 (2023-11-03)
 
 - changed: Updated chackpoints
