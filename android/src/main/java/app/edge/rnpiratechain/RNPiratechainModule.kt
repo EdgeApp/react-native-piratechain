@@ -131,6 +131,7 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
                     map.putArray("memos", Arguments.fromList(memos))
                 } catch (t: Throwable) {
                     // We can ignore these errors
+                    map.putArray("memos", Arguments.createArray())
                 }
             } else {
                 map.putArray("memos", Arguments.createArray())
