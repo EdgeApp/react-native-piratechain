@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.4.3 (2024-01-14)
+
+- changed: Updated chackpoints
+
 ## 0.4.2 (2023-11-09)
 
 - fixed: (Android) Make sure parseTx always returns a `memos` field
