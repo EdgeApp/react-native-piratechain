@@ -101,10 +101,12 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
         alias: String,
         promise: Promise,
     ) {
-        val wallet = getWallet(alias)
-        wallet.close()
-        synchronizerMap.remove(alias)
-        promise.resolve(null)
+        promise.wrap {
+            val wallet = getWallet(alias)
+            wallet.close()
+            synchronizerMap.remove(alias)
+            return@wrap null
+        }
     }
 
     fun inRange(
@@ -182,24 +184,26 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
         val wallet = getWallet(alias)
 
         wallet.coroutineScope.launch {
-            val numTxs = async { wallet.getTransactionCount() }.await()
-            val nativeArray = Arguments.createArray()
-            if (numTxs == 0) {
-                promise.resolve(nativeArray)
-                return@launch
-            }
-
-            val allTxs = async { collectTxs(wallet, numTxs) }.await()
-            val filteredTxs = allTxs.filter { tx -> inRange(tx, first, last) }
-
-            filteredTxs.map { tx ->
-                launch {
-                    val parsedTx = parseTx(wallet, tx)
-                    nativeArray.pushMap(parsedTx)
+            promise.wrap {
+                val numTxs = async { wallet.getTransactionCount() }.await()
+                val nativeArray = Arguments.createArray()
+                if (numTxs == 0) {
+                    promise.resolve(nativeArray)
+                    return@launch
                 }
-            }.forEach { it.join() }
 
-            promise.resolve(nativeArray)
+                val allTxs = async { collectTxs(wallet, numTxs) }.await()
+                val filteredTxs = allTxs.filter { tx -> inRange(tx, first, last) }
+
+                filteredTxs.map { tx ->
+                    launch {
+                        val parsedTx = parseTx(wallet, tx)
+                        nativeArray.pushMap(parsedTx)
+                    }
+                }.forEach { it.join() }
+
+                return@wrap nativeArray
+            }
         }
     }
 
@@ -210,8 +214,10 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     ) {
         val wallet = getWallet(alias)
         wallet.coroutineScope.launch {
-            wallet.coroutineScope.async { wallet.rewindToNearestHeight(wallet.latestBirthdayHeight, true) }.await()
-            promise.resolve(null)
+            promise.wrap {
+                wallet.coroutineScope.async { wallet.rewindToNearestHeight(wallet.latestBirthdayHeight, true) }.await()
+                return@wrap null
+            }
         }
     }
 
@@ -223,15 +229,17 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     ) {
         var seedPhrase = SeedPhrase.new(seed)
         moduleScope.launch {
-            var keys =
-                moduleScope.async {
-                    DerivationTool.getInstance().deriveUnifiedFullViewingKeys(
-                        seedPhrase.toByteArray(),
-                        networks.getOrDefault(network, PirateNetwork.Mainnet),
-                        DerivationTool.DEFAULT_NUMBER_OF_ACCOUNTS,
-                    )[0]
-                }.await()
-            promise.resolve(keys.encoding)
+            promise.wrap {
+                var keys =
+                    moduleScope.async {
+                        DerivationTool.getInstance().deriveUnifiedFullViewingKeys(
+                            seedPhrase.toByteArray(),
+                            networks.getOrDefault(network, PirateNetwork.Mainnet),
+                            DerivationTool.DEFAULT_NUMBER_OF_ACCOUNTS,
+                        )[0]
+                    }.await()
+                return@wrap keys.encoding
+            }
         }
     }
 
@@ -285,22 +293,24 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
         var totalZatoshi = Arrrtoshi(0L)
 
         wallet.coroutineScope.launch {
-            wallet.coroutineScope.async { wallet.refreshAllBalances() }.await()
+            promise.wrap {
+                wallet.coroutineScope.async { wallet.refreshAllBalances() }.await()
 
-            val transparentBalances = wallet.transparentBalances.value
-            availableZatoshi = availableZatoshi.plus(transparentBalances?.available ?: Arrrtoshi(0L))
-            totalZatoshi = totalZatoshi.plus(transparentBalances?.total ?: Arrrtoshi(0L))
-            val saplingBalances = wallet.saplingBalances.value
-            availableZatoshi = availableZatoshi.plus(saplingBalances?.available ?: Arrrtoshi(0L))
-            totalZatoshi = totalZatoshi.plus(saplingBalances?.total ?: Arrrtoshi(0L))
-            val orchardBalances = wallet.orchardBalances.value
-            availableZatoshi = availableZatoshi.plus(orchardBalances?.available ?: Arrrtoshi(0L))
-            totalZatoshi = totalZatoshi.plus(orchardBalances?.total ?: Arrrtoshi(0L))
+                val transparentBalances = wallet.transparentBalances.value
+                availableZatoshi = availableZatoshi.plus(transparentBalances?.available ?: Arrrtoshi(0L))
+                totalZatoshi = totalZatoshi.plus(transparentBalances?.total ?: Arrrtoshi(0L))
+                val saplingBalances = wallet.saplingBalances.value
+                availableZatoshi = availableZatoshi.plus(saplingBalances?.available ?: Arrrtoshi(0L))
+                totalZatoshi = totalZatoshi.plus(saplingBalances?.total ?: Arrrtoshi(0L))
+                val orchardBalances = wallet.orchardBalances.value
+                availableZatoshi = availableZatoshi.plus(orchardBalances?.available ?: Arrrtoshi(0L))
+                totalZatoshi = totalZatoshi.plus(orchardBalances?.total ?: Arrrtoshi(0L))
 
-            val map = Arguments.createMap()
-            map.putString("totalZatoshi", totalZatoshi.value.toString())
-            map.putString("availableZatoshi", availableZatoshi.value.toString())
-            promise.resolve(map)
+                val map = Arguments.createMap()
+                map.putString("totalZatoshi", totalZatoshi.value.toString())
+                map.putString("availableZatoshi", availableZatoshi.value.toString())
+                return@wrap map
+            }
         }
     }
 
@@ -315,12 +325,12 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     ) {
         val wallet = getWallet(alias)
         wallet.coroutineScope.launch {
-            var seedPhrase = SeedPhrase.new(seed)
-            val usk =
-                wallet.coroutineScope.async {
-                    DerivationTool.getInstance().deriveUnifiedSpendingKey(seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
-                }.await()
             try {
+                var seedPhrase = SeedPhrase.new(seed)
+                val usk =
+                    wallet.coroutineScope.async {
+                        DerivationTool.getInstance().deriveUnifiedSpendingKey(seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
+                    }.await()
                 val internalId =
                     wallet.sendToAddress(
                         usk,
@@ -358,15 +368,17 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     ) {
         val wallet = getWallet(alias)
         wallet.coroutineScope.launch {
-            // var unifiedAddress = wallet.coroutineScope.async { wallet.getUnifiedAddress(Account(0)) }.await()
-            val saplingAddress = wallet.coroutineScope.async { wallet.getSaplingAddress(Account(0)) }.await()
-            // val transparentAddress = wallet.coroutineScope.async { wallet.getTransparentAddress(Account(0)) }.await()
+            promise.wrap {
+                // var unifiedAddress = wallet.coroutineScope.async { wallet.getUnifiedAddress(Account(0)) }.await()
+                val saplingAddress = wallet.coroutineScope.async { wallet.getSaplingAddress(Account(0)) }.await()
+                // val transparentAddress = wallet.coroutineScope.async { wallet.getTransparentAddress(Account(0)) }.await()
 
-            val map = Arguments.createMap()
-            // map.putString("unifiedAddress", unifiedAddress)
-            map.putString("saplingAddress", saplingAddress)
-            // map.putString("transparentAddress", transparentAddress)
-            promise.resolve(map)
+                val map = Arguments.createMap()
+                // map.putString("unifiedAddress", unifiedAddress)
+                map.putString("saplingAddress", saplingAddress)
+                // map.putString("transparentAddress", transparentAddress)
+                return@wrap map
+            }
         }
     }
 
