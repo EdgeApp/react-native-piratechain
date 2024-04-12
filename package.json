@@ -5,7 +5,7 @@
   "homepage": "https://github.com/EdgeApp/react-native-piratechain",
   "repository": {
     "type": "git",
-    "url": "git@github.com:EdgeApp/react-native-piratechain.git"
+    "url": "git+ssh://git@github.com/EdgeApp/react-native-piratechain.git"
   },
   "license": "MIT",
   "author": "Airbitz, Inc.",
