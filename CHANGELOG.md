@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fixed: Update the packaging scripts to clean leftover files.
+- fixed: Update the packaging scripts to correctly report errors, so we don't send failed packages to NPM.
 
 ## 0.4.7 (2024-03-27)
 
