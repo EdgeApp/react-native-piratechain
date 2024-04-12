@@ -62,12 +62,6 @@ async function rebuildXcframework(): Promise<void> {
       'tmp/pirate-light-client-ffi/releases/XCFramework/libpiratelc.xcframework/ios-arm64/libpiratelc.framework/libpiratelc'
     )
   )
-  await disklet.setText(
-    'ios/PirateLightClientKit/Rust/libpiratelc.h',
-    await disklet.getText(
-      'tmp/pirate-light-client-ffi/releases/XCFramework/libpiratelc.xcframework/ios-arm64/libpiratelc.framework/Headers/piratelc.h'
-    )
-  )
 
   // Build the XCFramework:
   quietExec([
@@ -92,6 +86,7 @@ async function copySwift(): Promise<void> {
     'tmp/PirateLightClientKit/Sources'
   )
   const toDisklet = navigateDisklet(disklet, 'ios')
+  await toDisklet.delete('PirateLightClientKit/')
   const files = justFiles(await deepList(fromDisklet, 'PirateLightClientKit/'))
 
   for (const file of files) {
@@ -114,6 +109,14 @@ async function copySwift(): Promise<void> {
 
     await toDisklet.setText(file, fixed)
   }
+
+  // Copy the Rust header into the Swift location:
+  await disklet.setText(
+    'ios/PirateLightClientKit/Rust/libpiratelc.h',
+    await disklet.getText(
+      'tmp/pirate-light-client-ffi/releases/XCFramework/libpiratelc.xcframework/ios-arm64/libpiratelc.framework/Headers/piratelc.h'
+    )
+  )
 }
 
 /**

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Update the packaging scripts to clean leftover files.
+
 ## 0.4.7 (2024-03-27)
 
 - changed: Updated checkpoints
