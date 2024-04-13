@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 0.4.8 (2024-04-12)
+
+- changed: Updated checkpoints
 - fixed: Update the packaging scripts to clean leftover files.
 - fixed: Update the packaging scripts to correctly report errors, so we don't send failed packages to NPM.
 
