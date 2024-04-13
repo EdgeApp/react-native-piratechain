@@ -62,15 +62,9 @@ async function rebuildXcframework(): Promise<void> {
       'tmp/pirate-light-client-ffi/releases/XCFramework/libpiratelc.xcframework/ios-arm64/libpiratelc.framework/libpiratelc'
     )
   )
-  await disklet.setText(
-    'ios/PirateLightClientKit/Rust/libpiratelc.h',
-    await disklet.getText(
-      'tmp/pirate-light-client-ffi/releases/XCFramework/libpiratelc.xcframework/ios-arm64/libpiratelc.framework/Headers/piratelc.h'
-    )
-  )
 
   // Build the XCFramework:
-  quietExec([
+  loudExec(tmp, [
     'xcodebuild',
     '-create-xcframework',
     '-library',
@@ -92,6 +86,7 @@ async function copySwift(): Promise<void> {
     'tmp/PirateLightClientKit/Sources'
   )
   const toDisklet = navigateDisklet(disklet, 'ios')
+  await toDisklet.delete('PirateLightClientKit/')
   const files = justFiles(await deepList(fromDisklet, 'PirateLightClientKit/'))
 
   for (const file of files) {
@@ -114,6 +109,14 @@ async function copySwift(): Promise<void> {
 
     await toDisklet.setText(file, fixed)
   }
+
+  // Copy the Rust header into the Swift location:
+  await disklet.setText(
+    'ios/PirateLightClientKit/Rust/libpiratelc.h',
+    await disklet.getText(
+      'tmp/pirate-light-client-ffi/releases/XCFramework/libpiratelc.xcframework/ios-arm64/libpiratelc.framework/Headers/piratelc.h'
+    )
+  )
 }
 
 /**
@@ -122,10 +125,17 @@ async function copySwift(): Promise<void> {
 function getRepo(name: string, uri: string, hash: string): void {
   const path = join(tmp, name)
 
-  // Clone (if needed):
+  // Either clone or fetch:
   if (!existsSync(path)) {
     console.log(`Cloning ${name}...`)
-    loudExec(['git', 'clone', uri, name])
+    loudExec(tmp, ['git', 'clone', uri, name])
+  } else {
+    // We might already have the right commit, so fetch lazily:
+    try {
+      loudExec(path, ['git', 'fetch'])
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   // Checkout:
@@ -138,24 +148,17 @@ function getRepo(name: string, uri: string, hash: string): void {
 }
 
 /**
- * Runs a command and returns its results.
- */
-function quietExec(argv: string[]): string {
-  return execSync(argv.join(' '), {
-    cwd: tmp,
-    encoding: 'utf8'
-  }).replace(/\n$/, '')
-}
-
-/**
  * Runs a command and displays its results.
  */
-function loudExec(argv: string[]): void {
+function loudExec(path: string, argv: string[]): void {
   execSync(argv.join(' '), {
-    cwd: tmp,
+    cwd: path,
     stdio: 'inherit',
     encoding: 'utf8'
   })
 }
 
-main().catch(error => console.log(error))
+main().catch(error => {
+  console.log(error)
+  process.exit(1)
+})
