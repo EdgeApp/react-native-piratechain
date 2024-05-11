@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Stop depending on the iOS-provided SQLite, which causes crashes on iOS 13-15 because it is too old.
+
 ## 0.4.9 (2024-04-24)
 
 - changed: Updated checkpoints
