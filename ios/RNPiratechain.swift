@@ -66,6 +66,7 @@ let genericError = NSError(domain: "", code: 0)
 
 @objc(RNPiratechain)
 class RNPiratechain: RCTEventEmitter {
+  var hasListeners: Bool = false
 
   override static func requiresMainQueueSetup() -> Bool {
     return true
@@ -440,7 +441,17 @@ class RNPiratechain: RCTEventEmitter {
 
   // Events
   public func sendToJs(name: String, data: Any) {
-    self.sendEvent(withName: name, body: data)
+    if (hasListeners) {
+      self.sendEvent(withName: name, body: data)
+    }
+  }
+
+  override func startObserving() -> Void {
+    hasListeners = true
+  }
+
+  override func stopObserving() -> Void {
+    hasListeners = false
   }
 
   override func supportedEvents() -> [String] {
