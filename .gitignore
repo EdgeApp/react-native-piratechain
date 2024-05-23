@@ -1,5 +1,6 @@
 # Build output:
 /android/build/
+/ios/libpiratelc.h
 /ios/libpiratelc.xcframework/
 /ios/PirateLightClientKit/
 /lib/
