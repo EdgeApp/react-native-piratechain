@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.12 (2024-05-27)
+
 - fixed: Add a missing header file to the podspec.
 
 ## 0.4.11 (2024-05-17)
