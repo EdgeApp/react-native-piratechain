@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Add a missing header file to the podspec.
+
 ## 0.4.11 (2024-05-17)
 
 - fixed: Pause synchronizer events until JavaScript is ready to receive them.

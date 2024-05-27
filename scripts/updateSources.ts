@@ -112,7 +112,7 @@ async function copySwift(): Promise<void> {
 
   // Copy the Rust header into the Swift location:
   await disklet.setText(
-    'ios/PirateLightClientKit/Rust/libpiratelc.h',
+    'ios/libpiratelc.h',
     await disklet.getText(
       'tmp/pirate-light-client-ffi/releases/XCFramework/libpiratelc.xcframework/ios-arm64/libpiratelc.framework/Headers/piratelc.h'
     )

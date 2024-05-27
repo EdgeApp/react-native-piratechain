@@ -16,6 +16,7 @@ Pod::Spec.new do |s|
     :tag => "v#{s.version}"
   }
   s.source_files =
+    "ios/libpiratelc.h",
     "ios/react-native-piratechain-Bridging-Header.h",
     "ios/RNPiratechain.m",
     "ios/RNPiratechain.swift",
