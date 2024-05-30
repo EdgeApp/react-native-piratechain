@@ -15,12 +15,13 @@ const tmp = join(__dirname, '../tmp')
 
 async function main(): Promise<void> {
   if (!existsSync(tmp)) mkdirSync(tmp)
-  await downloadSources()
-  await rebuildXcframework()
-  await copySwift()
+  // await downloadSources()
+  // await rebuildXcframework()
+  // await copySwift()
   await copyCheckpoints(disklet)
 }
 
+/* eslint-disable  @typescript-eslint/no-unused-vars */
 function downloadSources(): void {
   getRepo(
     'PirateLightClientKit',
@@ -45,6 +46,7 @@ function downloadSources(): void {
  * into a dynamic framework, which doesn't work correctly.
  * We fix this by simply re-building the XCFramework.
  */
+/* eslint-disable  @typescript-eslint/no-unused-vars */
 async function rebuildXcframework(): Promise<void> {
   console.log('Creating XCFramework...')
   await disklet.delete('ios/libpiratelc.xcframework')
@@ -79,6 +81,7 @@ async function rebuildXcframework(): Promise<void> {
 /**
  * Copies swift code, with modifications.
  */
+/* eslint-disable  @typescript-eslint/no-unused-vars */
 async function copySwift(): Promise<void> {
   console.log('Copying swift sources...')
   const fromDisklet = navigateDisklet(
