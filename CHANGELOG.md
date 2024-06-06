@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.4.13 (2024-06-06)
+
+- changed: Updated checkpoints
+
 ## 0.4.12 (2024-05-27)
 
 - fixed: Add a missing header file to the podspec.
