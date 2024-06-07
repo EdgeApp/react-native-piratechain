@@ -14,7 +14,6 @@ import {
   SpendInfo,
   SpendSuccess,
   SynchronizerCallbacks,
-  UnifiedViewingKey,
   WalletBalance
 } from './types'
 
@@ -26,7 +25,7 @@ export const Tools = {
   deriveViewingKey: async (
     seedBytesHex: string,
     network: Network
-  ): Promise<UnifiedViewingKey> => {
+  ): Promise<string> => {
     const result = await RNPiratechain.deriveViewingKey(seedBytesHex, network)
     return result
   },

@@ -43,11 +43,6 @@ export interface SynchronizerStatus {
     | 'SYNCED' /** Indicates that this Synchronizer is fully up to date and ready for all wallet functions. When set, a UI element may want to turn green. In this state, the balance can be trusted. */
 }
 
-export interface UnifiedViewingKey {
-  extfvk: string
-  extpub: string
-}
-
 export interface StatusEvent {
   alias: string
   name: SynchronizerStatus
