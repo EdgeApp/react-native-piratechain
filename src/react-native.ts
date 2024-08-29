@@ -116,9 +116,14 @@ export class Synchronizer {
 
   // Events
 
-  subscribe({ onStatusChanged, onUpdate }: SynchronizerCallbacks): void {
+  subscribe({
+    onStatusChanged,
+    onUpdate,
+    onError
+  }: SynchronizerCallbacks): void {
     this.setListener('StatusEvent', onStatusChanged)
     this.setListener('UpdateEvent', onUpdate)
+    this.setListener('ErrorEvent', onError)
   }
 
   private setListener<T>(

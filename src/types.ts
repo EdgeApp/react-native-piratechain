@@ -50,9 +50,16 @@ export interface UpdateEvent {
   networkBlockHeight: number
 }
 
+export interface ErrorEvent {
+  alias: string
+  level: 'critical' | 'error'
+  message: string
+}
+
 export interface SynchronizerCallbacks {
   onStatusChanged(status: StatusEvent): void
   onUpdate(event: UpdateEvent): void
+  onError(error: ErrorEvent): void
 }
 
 export interface BlockRange {

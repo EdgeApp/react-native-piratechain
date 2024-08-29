@@ -92,6 +92,39 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
                     args.putString("name", status.toString())
                 }
             })
+
+            fun handleError(
+                level: String,
+                error: Throwable?,
+            ) {
+                sendEvent("ErrorEvent") { args ->
+                    args.putString("alias", alias)
+                    args.putString("level", level)
+                    args.putString("message", error?.message ?: "Unknown error")
+                }
+            }
+
+            // Error listeners
+            wallet.onCriticalErrorHandler = { error ->
+                handleError("critical", error)
+                false
+            }
+            wallet.onProcessorErrorHandler = { error ->
+                handleError("error", error)
+                true
+            }
+            wallet.onSetupErrorHandler = { error ->
+                handleError("error", error)
+                false
+            }
+            wallet.onSubmissionErrorHandler = { error ->
+                handleError("error", error)
+                false
+            }
+            wallet.onChainErrorHandler = { errorHeight, rewindHeight ->
+                val message = "Chain error detected at height: $errorHeight. Rewinding to: $rewindHeight"
+                handleError("error", Throwable(message))
+            }
             return@wrap null
         }
     }
