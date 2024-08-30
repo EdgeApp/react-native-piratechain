@@ -16,6 +16,7 @@ import {
   SynchronizerCallbacks,
   WalletBalance
 } from './types'
+export * from './types'
 
 const { RNPiratechain } = NativeModules
 
