@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## 0.5.0 (2024-09-05)
+
 - added: Add error listeners
+- changed: Updated checkpoints
 
 ## 0.4.17 (2024-08-19)
 
