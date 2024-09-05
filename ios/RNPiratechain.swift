@@ -455,7 +455,7 @@ class RNPiratechain: RCTEventEmitter {
   }
 
   override func supportedEvents() -> [String] {
-    return ["StatusEvent", "UpdateEvent"]
+    return ["ErrorEvent", "StatusEvent", "UpdateEvent"]
   }
 }
 
@@ -506,6 +506,20 @@ class WalletSynchronizer: NSObject {
         }
         self.status = "SYNCED"
         self.fullySynced = true
+      case .error(let error):
+        let zcashError = error.toZcashError()
+        switch zcashError.code {
+        case .compactBlockProcessorCritical:
+          let data: NSDictionary = [
+            "alias": self.alias, "level": "critical", "message": zcashError.message,
+          ]
+          emit("ErrorEvent", data)
+        default:
+          let data: NSDictionary = [
+            "alias": self.alias, "level": "error", "message": zcashError.message,
+          ]
+          emit("ErrorEvent", data)
+        }
       default:
         break
       }

@@ -31,21 +31,13 @@ export interface SpendFailure {
   errorCode?: string
 }
 
-export interface SynchronizerStatus {
+export interface StatusEvent {
   alias: string
   name:
     | 'STOPPED' /** Indicates that [stop] has been called on this Synchronizer and it will no longer be used. */
     | 'DISCONNECTED' /** Indicates that this Synchronizer is disconnected from its lightwalletd server. When set, a UI element may want to turn red. */
-    | 'DOWNLOADING' /** Indicates that this Synchronizer is actively downloading new blocks from the server. */
-    | 'VALIDATING' /** Indicates that this Synchronizer is actively validating new blocks that were downloaded from the server. Blocks need to be verified before they are scanned. This confirms that each block is chain-sequential, thereby detecting missing blocks and reorgs. */
-    | 'SCANNING' /** Indicates that this Synchronizer is actively decrypting new blocks that were downloaded from the server. */
-    | 'ENHANCING' /** Indicates that this Synchronizer is actively enhancing newly scanned blocks with additional transaction details, fetched from the server. */
+    | 'SYNCING' /** Indicates that the Synchronizer is actively syncing new blocks. */
     | 'SYNCED' /** Indicates that this Synchronizer is fully up to date and ready for all wallet functions. When set, a UI element may want to turn green. In this state, the balance can be trusted. */
-}
-
-export interface StatusEvent {
-  alias: string
-  name: SynchronizerStatus
 }
 
 export interface UpdateEvent {
@@ -58,9 +50,16 @@ export interface UpdateEvent {
   networkBlockHeight: number
 }
 
+export interface ErrorEvent {
+  alias: string
+  level: 'critical' | 'error'
+  message: string
+}
+
 export interface SynchronizerCallbacks {
-  onStatusChanged(status: SynchronizerStatus): void
+  onStatusChanged(status: StatusEvent): void
   onUpdate(event: UpdateEvent): void
+  onError(error: ErrorEvent): void
 }
 
 export interface BlockRange {
