@@ -118,7 +118,9 @@ class RNPiratechain: RCTEventEmitter {
           SynchronizerMap[alias] = wallet
           resolve(nil)
         } catch {
-          reject("InitializeError", "Synchronizer failed to initialize", error)
+          reject(
+            "InitializeError", "Synchronizer failed to initialize \(error.localizedDescription)",
+            error)
         }
       } else {
         // Wallet already initialized
@@ -137,7 +139,7 @@ class RNPiratechain: RCTEventEmitter {
           try await wallet.synchronizer.start()
           wallet.subscribe()
         } catch {
-          reject("StartError", "Synchronizer failed to start", error)
+          reject("StartError", "Synchronizer failed to start \(error.localizedDescription)", error)
         }
         resolve(nil)
       } else {
@@ -170,7 +172,9 @@ class RNPiratechain: RCTEventEmitter {
           let height = try await wallet.synchronizer.latestHeight()
           resolve(height)
         } catch {
-          reject("getLatestNetworkHeight", "Failed to query blockheight", error)
+          reject(
+            "getLatestNetworkHeight", "Failed to query blockheight \(error.localizedDescription)",
+            error)
         }
       } else {
         reject("getLatestNetworkHeightError", "Wallet does not exist", genericError)
@@ -191,7 +195,9 @@ class RNPiratechain: RCTEventEmitter {
         lightwalletd.closeConnection()
         resolve(height)
       } catch {
-        reject("getLatestNetworkHeightGrpc", "Failed to query blockheight", error)
+        reject(
+          "getLatestNetworkHeightGrpc", "Failed to query blockheight \(error.localizedDescription)",
+          error)
       }
     }
   }
@@ -228,7 +234,7 @@ class RNPiratechain: RCTEventEmitter {
           }
           resolve(tx)
         } catch {
-          reject("SpendToAddressError", "Failed to spend", error)
+          reject("SpendToAddressError", "Failed to spend \(error.localizedDescription)", error)
         }
       } else {
         reject("SpendToAddressError", "Wallet does not exist", genericError)
@@ -287,7 +293,9 @@ class RNPiratechain: RCTEventEmitter {
           }
           resolve(out)
         } catch {
-          reject("GetTransactionsError", "Failed to get transactions", genericError)
+          reject(
+            "GetTransactionsError", "Failed to get transactions \(error.localizedDescription)",
+            genericError)
         }
       } else {
         reject("GetTransactionsError", "Wallet does not exist", genericError)
@@ -319,7 +327,7 @@ class RNPiratechain: RCTEventEmitter {
           resolve(balance.nsDictionary)
           return
         } catch {
-          reject("GetShieldedBalanceError", "Error", error)
+          reject("GetShieldedBalanceError", "Error \(error.localizedDescription)", error)
         }
       } else {
         reject("GetShieldedBalanceError", "Wallet does not exist", genericError)
@@ -394,7 +402,9 @@ class RNPiratechain: RCTEventEmitter {
       let viewingKey = try deriveUnifiedViewingKey(seed, PirateNetwork)
       resolve(viewingKey.stringEncoded)
     } catch {
-      reject("DeriveViewingKeyError", "Failed to derive viewing key", error)
+      reject(
+        "DeriveViewingKeyError", "Failed to derive viewing key \(error.localizedDescription)", error
+      )
     }
   }
 
@@ -416,7 +426,9 @@ class RNPiratechain: RCTEventEmitter {
           resolve(addresses)
           return
         } catch {
-          reject("deriveUnifiedAddress", "Failed to derive unified address", error)
+          reject(
+            "deriveUnifiedAddress",
+            "Failed to derive unified address \(error.localizedDescription)", error)
         }
       } else {
         reject("deriveUnifiedAddress", "Wallet does not exist", genericError)
