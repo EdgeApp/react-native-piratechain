@@ -106,6 +106,7 @@ async function copySwift(): Promise<void> {
         'Bundle.main.url(forResource: "piratechain-testnet", withExtension: "bundle")!'
       )
       .replace(/static let macOS = BundleCheckpointURLProvider.*}\)/s, '')
+      .replace(/ = Expression</g, ' = SQLite.Expression<') // Fix xcode16 build errors
 
     await toDisklet.setText(file, fixed)
   }
