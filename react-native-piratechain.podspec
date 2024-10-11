@@ -18,6 +18,8 @@ Pod::Spec.new do |s|
   s.source_files =
     "ios/libpiratelc.h",
     "ios/react-native-piratechain-Bridging-Header.h",
+    "ios/FuckLogger.h",
+    "ios/FuckLogger.m",
     "ios/RNPiratechain.m",
     "ios/RNPiratechain.swift",
     "ios/PirateLightClientKit/**/*.swift"

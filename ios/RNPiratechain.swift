@@ -81,6 +81,11 @@ class RNPiratechain: RCTEventEmitter {
     }
   }
 
+  @objc func jsLog(_ message: String) {
+    FuckLogger.logWarning(message)
+  }
+
+
   // Synchronizer
   @objc func initialize(
     _ seed: String, _ birthdayHeight: Int, _ alias: String, _ networkName: String,
@@ -88,6 +93,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     Task {
+      jsLog("This is a message from Swift")
       let network = getNetworkParams(networkName)
       let endpoint = LightWalletEndpoint(address: defaultHost, port: defaultPort, secure: true)
       let initializer = Initializer(
