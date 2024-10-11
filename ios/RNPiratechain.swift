@@ -81,10 +81,19 @@ class RNPiratechain: RCTEventEmitter {
     }
   }
 
-  @objc func jsLog(_ message: String) {
-    FuckLogger.logWarning(message)
+  @objc func jsLog(_ alias: String, _ message: String) {
+    FuckLogger.logWarning("ARRRLog \(String(alias.prefix(6))) \(message)")
   }
 
+  func dictionaryToString(dict: [AnyHashable: Any]) -> String {
+    let stringKeyedDictionary: [String: Any] = Dictionary(
+      uniqueKeysWithValues: dict.map { (key, value) in
+        (String(describing: key), value)
+      })
+
+    // Convert the string-keyed dictionary into a string representation
+    return stringKeyedDictionary.map { "\(String($0.key.prefix(6)))" }.joined(separator: ", ")
+  }
 
   // Synchronizer
   @objc func initialize(
@@ -93,7 +102,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     Task {
-      jsLog("This is a message from Swift")
+      jsLog(alias, "initialize 1")
       let network = getNetworkParams(networkName)
       let endpoint = LightWalletEndpoint(address: defaultHost, port: defaultPort, secure: true)
       let initializer = Initializer(
@@ -107,21 +116,29 @@ class RNPiratechain: RCTEventEmitter {
         saplingParamsSourceURL: SaplingParamsSourceURL.default,
         alias: ZcashSynchronizerAlias.custom(alias)
       )
+      jsLog(alias, "initialize SynchronizerMap  \(dictionaryToString(dict: SynchronizerMap))")
+
       if SynchronizerMap[alias] == nil {
         do {
           let wallet = try WalletSynchronizer(
             alias: alias, initializer: initializer, emitter: sendToJs)
+          jsLog(alias, "initialize 2")
           let seedBytes = try Mnemonic.deterministicSeedBytes(from: seed)
+          jsLog(alias, "initialize 3")
           let viewingKeys = try deriveUnifiedViewingKey(seed, network)
-
+          jsLog(alias, "initialize 4")
           _ = try await wallet.synchronizer.prepare(
             with: seedBytes,
             viewingKeys: [viewingKeys],
             walletBirthday: birthdayHeight
           )
+          jsLog(alias, "initialize 5")
           try await wallet.synchronizer.start()
+          jsLog(alias, "initialize 6")
           wallet.subscribe()
+          jsLog(alias, "initialize 7")
           SynchronizerMap[alias] = wallet
+          jsLog(alias, "initialize 8")
           resolve(nil)
         } catch {
           reject(
@@ -129,6 +146,7 @@ class RNPiratechain: RCTEventEmitter {
             error)
         }
       } else {
+        jsLog(alias, "initialize Wallet already initialized")
         // Wallet already initialized
         resolve(nil)
       }
@@ -140,6 +158,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     Task {
+      jsLog(alias, "start \(dictionaryToString(dict: SynchronizerMap))")
       if let wallet = SynchronizerMap[alias] {
         do {
           try await wallet.synchronizer.start()
@@ -158,6 +177,7 @@ class RNPiratechain: RCTEventEmitter {
     _ alias: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
+    jsLog(alias, "stop \(dictionaryToString(dict: SynchronizerMap))")
     if let wallet = SynchronizerMap[alias] {
       wallet.synchronizer.stop()
       wallet.cancellables.forEach { $0.cancel() }
@@ -173,6 +193,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     Task {
+      jsLog(alias, "getLatestNetworkHeight \(dictionaryToString(dict: SynchronizerMap))")
       if let wallet = SynchronizerMap[alias] {
         do {
           let height = try await wallet.synchronizer.latestHeight()
@@ -194,6 +215,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     Task {
+      jsLog("", "getBirthdayHeight \(dictionaryToString(dict: SynchronizerMap))")
       do {
         let endpoint = LightWalletEndpoint(address: host, port: port, secure: true)
         let lightwalletd: LightWalletService = LightWalletGRPCService(endpoint: endpoint)
@@ -214,6 +236,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     Task {
+      jsLog(alias, "sendToAddress \(dictionaryToString(dict: SynchronizerMap))")
       if let wallet = SynchronizerMap[alias] {
         let amount = Int64(zatoshi)
         if amount == nil {
@@ -253,6 +276,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     Task {
+      jsLog(alias, "getTransactions \(dictionaryToString(dict: SynchronizerMap))")
       if let wallet = SynchronizerMap[alias] {
         if !wallet.fullySynced {
           reject("GetTransactionsError", "Wallet is not synced", genericError)
@@ -314,6 +338,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     Task {
+      jsLog(alias, "getBalance \(dictionaryToString(dict: SynchronizerMap))")
       if let wallet = SynchronizerMap[alias] {
         do {
           let totalShieldedBalance = try await wallet.synchronizer.getShieldedBalance()
@@ -346,6 +371,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     Task {
+      jsLog(alias, "rescan \(dictionaryToString(dict: SynchronizerMap))")
       if let wallet = SynchronizerMap[alias] {
         wallet.synchronizer.rewind(.birthday).sink(
           receiveCompletion: { completion in
@@ -404,6 +430,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     do {
+      jsLog("", "deriveViewingKey \(dictionaryToString(dict: SynchronizerMap))")
       let PirateNetwork = getNetworkParams(network)
       let viewingKey = try deriveUnifiedViewingKey(seed, PirateNetwork)
       resolve(viewingKey.stringEncoded)
@@ -419,6 +446,7 @@ class RNPiratechain: RCTEventEmitter {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     Task {
+      jsLog(alias, "deriveUnifiedAddress \(dictionaryToString(dict: SynchronizerMap))")
       if let wallet = SynchronizerMap[alias] {
         do {
           // let unifiedAddress = try await wallet.synchronizer.getUnifiedAddress(accountIndex: 0)
@@ -427,7 +455,7 @@ class RNPiratechain: RCTEventEmitter {
           let addresses: NSDictionary = [
             // "unifiedAddress": unifiedAddress.stringEncoded,
             "saplingAddress": saplingAddress.stringEncoded
-            // "transparentAddress": transparentAddress.stringEncoded
+              // "transparentAddress": transparentAddress.stringEncoded
           ]
           resolve(addresses)
           return
@@ -446,6 +474,7 @@ class RNPiratechain: RCTEventEmitter {
     _ address: String, _ network: String, resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
+    jsLog("", "isValidAddress")
     let derivationTool = getDerivationToolForNetwork(network)
     if derivationTool.isValidUnifiedAddress(address)
       || derivationTool.isValidSaplingAddress(address)
