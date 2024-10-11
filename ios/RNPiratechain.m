@@ -1,5 +1,6 @@
 #import <React/RCTBridgeModule.h>
 #import <React/RCTEventEmitter.h>
+#import <FuckLogger.h>
 
 @interface RCT_EXTERN_MODULE(RNPiratechain, RCTEventEmitter<RCTBridgeModule>)
 
@@ -81,5 +82,7 @@ rejecter:(RCTPromiseRejectBlock)reject
 
 // Events
 RCT_EXTERN_METHOD(supportedEvents)
+
+RCT_EXTERN_METHOD(jsLog)
 
 @end
