@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.5.3 (2024-10-16)
+
+- changed: Replace `pirate.lightwallet.client` with precompiled .aar that resolves incompatibility with newer versions of `io.grpc`
+- changed: Updated checkpoints
+
 ## 0.5.2 (2024-10-01)
 
 - changed: Updated checkpoints
