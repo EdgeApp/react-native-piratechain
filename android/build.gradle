@@ -33,6 +33,10 @@ android {
 }
 
 repositories {
+  flatDir {
+    dirs("libs")
+  }
+
   maven {
     url('../node_modules/react-native/android')
   }
@@ -46,8 +50,13 @@ dependencies {
   // Compiler plugin for Room annotation support:
   kapt 'androidx.room:room-compiler:2.3.0'
 
-  implementation 'io.github.piratenetwork:pirate-android-sdk:1.19.0-beta01'
-  implementation 'io.github.piratenetwork:pirate-android-sdk-incubator:1.19.0-beta01'
+  implementation(files("libs/lightwallet-client-lib-release.aar"))
+  implementation("io.github.piratenetwork:pirate-android-sdk:1.19.0-beta01") {
+    exclude group: "io.github.piratenetwork", module: "pirate-lightwallet-client"
+  }
+  implementation("io.github.piratenetwork:pirate-android-sdk-incubator:1.19.0-beta01") {
+    exclude group: "io.github.piratenetwork", module: "pirate-lightwallet-client"
+  }
   implementation 'androidx.appcompat:appcompat:1.4.1'
   implementation 'androidx.paging:paging-runtime-ktx:2.1.2'
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
