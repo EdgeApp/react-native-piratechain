@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.5.6 (2024-11-21)
+
+- changed: Updated checkpoints
+
 ## 0.5.5 (2024-11-21)
 
 - changed: (Android) Update pirate-lightwallet-client to v1.19.0-beta02
