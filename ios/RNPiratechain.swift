@@ -222,7 +222,7 @@ class RNPiratechain: RCTEventEmitter {
             memo: sdkMemo
           )
 
-          let tx: NSMutableDictionary = ["txId": broadcastTx.rawID.hexEncodedString()]
+          let tx: NSMutableDictionary = ["txId": broadcastTx.rawID.toHexStringTxId()]
           if broadcastTx.raw != nil {
             tx["raw"] = broadcastTx.raw?.hexEncodedString()
           }
