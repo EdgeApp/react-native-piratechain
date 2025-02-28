@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Fix txid returned from broadcast
+
 ## 0.5.6 (2024-11-21)
 
 - changed: Updated checkpoints

@@ -21,8 +21,9 @@ import pirate.lightwallet.client.model.Response
 import pirate.lightwallet.client.new
 import kotlin.coroutines.EmptyCoroutineContext
 
-class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
-    ReactContextBaseJavaModule(reactContext) {
+class RNPiratechainModule(
+    private val reactContext: ReactApplicationContext,
+) : ReactContextBaseJavaModule(reactContext) {
     /**
      * Scope for anything that out-lives the synchronizer, meaning anything that can be used before
      * the synchronizer starts or after it stops. Everything else falls within the scope of the
@@ -81,7 +82,11 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
                         args.putString("alias", alias)
                         args.putInt("lastDownloadedHeight", lastDownloadedHeight.value.toInt())
                         args.putInt("lastScannedHeight", lastScannedHeight.value.toInt())
-                        args.putInt("scanProgress", wallet.processor.progress.value.toPercentage())
+                        args.putInt(
+                            "scanProgress",
+                            wallet.processor.progress.value
+                                .toPercentage(),
+                        )
                         args.putInt("networkBlockHeight", networkBlockHeight.value.toInt())
                     }
                 }
@@ -228,12 +233,13 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
                 val allTxs = async { collectTxs(wallet, numTxs) }.await()
                 val filteredTxs = allTxs.filter { tx -> inRange(tx, first, last) }
 
-                filteredTxs.map { tx ->
-                    launch {
-                        val parsedTx = parseTx(wallet, tx)
-                        nativeArray.pushMap(parsedTx)
-                    }
-                }.forEach { it.join() }
+                filteredTxs
+                    .map { tx ->
+                        launch {
+                            val parsedTx = parseTx(wallet, tx)
+                            nativeArray.pushMap(parsedTx)
+                        }
+                    }.forEach { it.join() }
 
                 return@wrap nativeArray
             }
@@ -264,13 +270,14 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
         moduleScope.launch {
             promise.wrap {
                 var keys =
-                    moduleScope.async {
-                        DerivationTool.getInstance().deriveUnifiedFullViewingKeys(
-                            seedPhrase.toByteArray(),
-                            networks.getOrDefault(network, PirateNetwork.Mainnet),
-                            DerivationTool.DEFAULT_NUMBER_OF_ACCOUNTS,
-                        )[0]
-                    }.await()
+                    moduleScope
+                        .async {
+                            DerivationTool.getInstance().deriveUnifiedFullViewingKeys(
+                                seedPhrase.toByteArray(),
+                                networks.getOrDefault(network, PirateNetwork.Mainnet),
+                                DerivationTool.DEFAULT_NUMBER_OF_ACCOUNTS,
+                            )[0]
+                        }.await()
                 return@wrap keys.encoding
             }
         }
@@ -361,9 +368,10 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
             try {
                 var seedPhrase = SeedPhrase.new(seed)
                 val usk =
-                    wallet.coroutineScope.async {
-                        DerivationTool.getInstance().deriveUnifiedSpendingKey(seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
-                    }.await()
+                    wallet.coroutineScope
+                        .async {
+                            DerivationTool.getInstance().deriveUnifiedSpendingKey(seedPhrase.toByteArray(), wallet.network, Account.DEFAULT)
+                        }.await()
                 val internalId =
                     wallet.sendToAddress(
                         usk,
@@ -372,12 +380,13 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
                         memo,
                     )
                 val tx =
-                    wallet.coroutineScope.async {
-                        wallet.transactions.flatMapConcat {
-                                list ->
-                            flowOf(*list.toTypedArray())
-                        }
-                    }.await().firstOrNull { item -> item.id == internalId }
+                    wallet.coroutineScope
+                        .async {
+                            wallet.transactions.flatMapConcat { list ->
+                                flowOf(*list.toTypedArray())
+                            }
+                        }.await()
+                        .firstOrNull { item -> item.id == internalId }
                 if (tx == null) throw Exception("transaction failed")
 
                 val map = Arguments.createMap()
@@ -474,8 +483,9 @@ class RNPiratechainModule(private val reactContext: ReactApplicationContext) :
     inline fun ByteArray.toHexReversed(): String {
         val sb = StringBuilder(size * 2)
         var i = size - 1
-        while (i >= 0)
+        while (i >= 0) {
             sb.append(String.format("%02x", this[i--]))
+        }
         return sb.toString()
     }
 }

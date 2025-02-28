@@ -11,7 +11,7 @@ struct ConfirmedTx {
   var rawTransactionId: String
   var blockTimeInSeconds: Int
   var value: String
-  var memos: Array<String>?
+  var memos: [String]?
   var dictionary: [String: Any?] {
     return [
       "minedHeight": minedHeight,
@@ -222,7 +222,7 @@ class RNPiratechain: RCTEventEmitter {
             memo: sdkMemo
           )
 
-          let tx: NSMutableDictionary = ["txId": broadcastTx.rawID.hexEncodedString()]
+          let tx: NSMutableDictionary = ["txId": broadcastTx.rawID.toHexStringTxId()]
           if broadcastTx.raw != nil {
             tx["raw"] = broadcastTx.raw?.hexEncodedString()
           }
@@ -411,7 +411,7 @@ class RNPiratechain: RCTEventEmitter {
           let addresses: NSDictionary = [
             // "unifiedAddress": unifiedAddress.stringEncoded,
             "saplingAddress": saplingAddress.stringEncoded
-            // "transparentAddress": transparentAddress.stringEncoded
+              // "transparentAddress": transparentAddress.stringEncoded
           ]
           resolve(addresses)
           return
@@ -441,16 +441,16 @@ class RNPiratechain: RCTEventEmitter {
 
   // Events
   public func sendToJs(name: String, data: Any) {
-    if (hasListeners) {
+    if hasListeners {
       self.sendEvent(withName: name, body: data)
     }
   }
 
-  override func startObserving() -> Void {
+  override func startObserving() {
     hasListeners = true
   }
 
-  override func stopObserving() -> Void {
+  override func stopObserving() {
     hasListeners = false
   }
 
