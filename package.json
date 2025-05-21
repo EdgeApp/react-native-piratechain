@@ -20,7 +20,6 @@
   "files": [
     "/android/build.gradle",
     "/android/src/",
-    "/android/libs/",
     "/CHANGELOG.md",
     "/ios/",
     "/lib/",

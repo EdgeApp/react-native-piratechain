@@ -95,6 +95,8 @@ async function copySwift(): Promise<void> {
       // We are lumping everything into one module,
       // so we don't need to import this externally:
       .replace('import libpiratelc', '')
+      // This is ambiguous with the Swift one:
+      .replace(/Expression</g, 'SQLite.Expression<')
       // The Swift package manager synthesizes a "Bundle.module" accessor,
       // but with CocoaPods we need to load things manually:
       .replace(
