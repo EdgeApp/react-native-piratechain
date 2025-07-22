@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Updated checkpoints
+
 ## 0.5.10 (2025-05-20)
 
 - fixed: Ambiguous `Expression` imports in Swift.
