@@ -47,90 +47,92 @@ class RNPiratechainModule(
         defaultHost: String = "mainnet.lightwalletd.com",
         defaultPort: Int = 9067,
         promise: Promise,
-    ) = moduleScope.launch {
-        promise.wrap {
-            var network = networks.getOrDefault(networkName, PirateNetwork.Mainnet)
-            var endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
-            var seedPhrase = SeedPhrase.new(seed)
-            if (!synchronizerMap.containsKey(alias)) {
-                synchronizerMap.set(
-                    alias,
-                    Synchronizer.new(
-                        reactApplicationContext,
-                        network,
+    ) {
+        moduleScope.launch {
+            promise.wrap {
+                var network = networks.getOrDefault(networkName, PirateNetwork.Mainnet)
+                var endpoint = LightWalletEndpoint(defaultHost, defaultPort, true)
+                var seedPhrase = SeedPhrase.new(seed)
+                if (!synchronizerMap.containsKey(alias)) {
+                    synchronizerMap.set(
                         alias,
-                        endpoint,
-                        seedPhrase.toByteArray(),
-                        BlockHeight.new(network, birthdayHeight.toLong()),
-                    ) as SdkSynchronizer,
-                )
-            }
-            val wallet = getWallet(alias)
-            val scope = wallet.coroutineScope
-            wallet.processorInfo.collectWith(scope, { update ->
-                scope.launch {
-                    var lastDownloadedHeight = this.async { wallet.processor.downloader.getLastDownloadedHeight() }.await()
-                    if (lastDownloadedHeight == null) lastDownloadedHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
+                        Synchronizer.new(
+                            reactApplicationContext,
+                            network,
+                            alias,
+                            endpoint,
+                            seedPhrase.toByteArray(),
+                            BlockHeight.new(network, birthdayHeight.toLong()),
+                        ) as SdkSynchronizer,
+                    )
+                }
+                val wallet = getWallet(alias)
+                val scope = wallet.coroutineScope
+                wallet.processorInfo.collectWith(scope, { update ->
+                    scope.launch {
+                        var lastDownloadedHeight = this.async { wallet.processor.downloader.getLastDownloadedHeight() }.await()
+                        if (lastDownloadedHeight == null) lastDownloadedHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
 
-                    var lastScannedHeight = update.lastSyncedHeight
-                    if (lastScannedHeight == null) lastScannedHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
+                        var lastScannedHeight = update.lastSyncedHeight
+                        if (lastScannedHeight == null) lastScannedHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
 
-                    var networkBlockHeight = update.networkBlockHeight
-                    if (networkBlockHeight == null) networkBlockHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
+                        var networkBlockHeight = update.networkBlockHeight
+                        if (networkBlockHeight == null) networkBlockHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
 
-                    sendEvent("UpdateEvent") { args ->
+                        sendEvent("UpdateEvent") { args ->
+                            args.putString("alias", alias)
+                            args.putInt("lastDownloadedHeight", lastDownloadedHeight.value.toInt())
+                            args.putInt("lastScannedHeight", lastScannedHeight.value.toInt())
+                            args.putInt(
+                                "scanProgress",
+                                wallet.processor.progress.value
+                                    .toPercentage(),
+                            )
+                            args.putInt("networkBlockHeight", networkBlockHeight.value.toInt())
+                        }
+                    }
+                })
+                wallet.status.collectWith(scope, { status ->
+                    sendEvent("StatusEvent") { args ->
                         args.putString("alias", alias)
-                        args.putInt("lastDownloadedHeight", lastDownloadedHeight.value.toInt())
-                        args.putInt("lastScannedHeight", lastScannedHeight.value.toInt())
-                        args.putInt(
-                            "scanProgress",
-                            wallet.processor.progress.value
-                                .toPercentage(),
-                        )
-                        args.putInt("networkBlockHeight", networkBlockHeight.value.toInt())
+                        args.putString("name", status.toString())
+                    }
+                })
+
+                fun handleError(
+                    level: String,
+                    error: Throwable?,
+                ) {
+                    sendEvent("ErrorEvent") { args ->
+                        args.putString("alias", alias)
+                        args.putString("level", level)
+                        args.putString("message", error?.message ?: "Unknown error")
                     }
                 }
-            })
-            wallet.status.collectWith(scope, { status ->
-                sendEvent("StatusEvent") { args ->
-                    args.putString("alias", alias)
-                    args.putString("name", status.toString())
-                }
-            })
 
-            fun handleError(
-                level: String,
-                error: Throwable?,
-            ) {
-                sendEvent("ErrorEvent") { args ->
-                    args.putString("alias", alias)
-                    args.putString("level", level)
-                    args.putString("message", error?.message ?: "Unknown error")
+                // Error listeners
+                wallet.onCriticalErrorHandler = { error ->
+                    handleError("critical", error)
+                    false
                 }
+                wallet.onProcessorErrorHandler = { error ->
+                    handleError("error", error)
+                    true
+                }
+                wallet.onSetupErrorHandler = { error ->
+                    handleError("error", error)
+                    false
+                }
+                wallet.onSubmissionErrorHandler = { error ->
+                    handleError("error", error)
+                    false
+                }
+                wallet.onChainErrorHandler = { errorHeight, rewindHeight ->
+                    val message = "Chain error detected at height: $errorHeight. Rewinding to: $rewindHeight"
+                    handleError("error", Throwable(message))
+                }
+                return@wrap null
             }
-
-            // Error listeners
-            wallet.onCriticalErrorHandler = { error ->
-                handleError("critical", error)
-                false
-            }
-            wallet.onProcessorErrorHandler = { error ->
-                handleError("error", error)
-                true
-            }
-            wallet.onSetupErrorHandler = { error ->
-                handleError("error", error)
-                false
-            }
-            wallet.onSubmissionErrorHandler = { error ->
-                handleError("error", error)
-                false
-            }
-            wallet.onChainErrorHandler = { errorHeight, rewindHeight ->
-                val message = "Chain error detected at height: $errorHeight. Rewinding to: $rewindHeight"
-                handleError("error", Throwable(message))
-            }
-            return@wrap null
         }
     }
 

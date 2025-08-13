@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Make the `initialize` return type compatible with RN79.
+
 ## 0.5.11 (2025-07-22)
 
 - changed: Updated checkpoints
