@@ -50,11 +50,11 @@ dependencies {
   // Compiler plugin for Room annotation support:
   kapt 'androidx.room:room-compiler:2.3.0'
 
-  implementation("io.github.piratenetwork:pirate-lightwallet-client:1.19.0-beta02")
-  implementation("io.github.piratenetwork:pirate-android-sdk:1.19.0-beta01") {
+  implementation("io.github.piratenetwork:pirate-lightwallet-client:1.19.0-beta03")
+  implementation("io.github.piratenetwork:pirate-android-sdk:1.19.0-beta03") {
     exclude group: "io.github.piratenetwork", module: "pirate-lightwallet-client"
   }
-  implementation("io.github.piratenetwork:pirate-android-sdk-incubator:1.19.0-beta01") {
+  implementation("io.github.piratenetwork:pirate-android-sdk-incubator:1.19.0-beta03") {
     exclude group: "io.github.piratenetwork", module: "pirate-lightwallet-client"
   }
   implementation 'androidx.appcompat:appcompat:1.4.1'

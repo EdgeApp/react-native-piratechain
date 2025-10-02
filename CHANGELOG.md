@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.5.14 (2025-10-01)
+
+- fixed: Upgrade to latest upstream piratechain libraries.
+
 ## 0.5.13 (2025-09-09)
 
 - changed: Updated checkpoints
