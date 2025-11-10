@@ -1,11 +1,15 @@
 package app.edge.rnpiratechain
 
+import android.util.Log
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import pirate.android.sdk.SdkSynchronizer
 import pirate.android.sdk.Synchronizer
@@ -33,6 +37,7 @@ class RNPiratechainModule(
      */
     var moduleScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
     var synchronizerMap = mutableMapOf<String, SdkSynchronizer>()
+    private val statusLogJobs = mutableMapOf<String, Job>()
 
     val networks = mapOf("mainnet" to PirateNetwork.Mainnet, "testnet" to PirateNetwork.Testnet)
 
@@ -70,6 +75,15 @@ class RNPiratechainModule(
                 val scope = wallet.coroutineScope
                 wallet.processorInfo.collectWith(scope, { update ->
                     scope.launch {
+                        // Suppress UpdateEvent while periodic logger is active (<100%)
+                        statusLogJobs[alias]?.let { job ->
+                            if (job.isActive &&
+                                wallet.processor.progress.value
+                                    .isLessThanHundredPercent()
+                            ) {
+                                return@launch
+                            }
+                        }
                         var lastDownloadedHeight = this.async { wallet.processor.downloader.getLastDownloadedHeight() }.await()
                         if (lastDownloadedHeight == null) lastDownloadedHeight = BlockHeight.new(wallet.network, birthdayHeight.toLong())
 
@@ -131,9 +145,72 @@ class RNPiratechainModule(
                     val message = "Chain error detected at height: $errorHeight. Rewinding to: $rewindHeight"
                     handleError("error", Throwable(message))
                 }
+                // Start periodic status logging automatically
+                startStatusLogging(alias)
                 return@wrap null
             }
         }
+    }
+
+    private fun startStatusLogging(
+        alias: String,
+        intervalMs: Int = 5000,
+    ) {
+        val wallet = getWallet(alias)
+
+        // Avoid duplicating jobs per alias
+        statusLogJobs[alias]?.let { existing ->
+            if (existing.isActive) {
+                return
+            }
+        }
+
+        val job =
+            wallet.coroutineScope.launch {
+                try {
+                    while (isActive) {
+                        try {
+                            val info = wallet.processor.processorInfo.value
+                            val lastDownloadedHeight = wallet.processor.downloader.getLastDownloadedHeight()
+                            val lastScannedHeight = info.lastSyncedHeight
+                            val networkBlockHeight = info.networkBlockHeight
+                            // If any required values are unavailable, skip this cycle
+                            if (lastDownloadedHeight == null || lastScannedHeight == null || networkBlockHeight == null) {
+                                continue
+                            }
+                            val progressPct =
+                                wallet.processor.progress.value
+                                    .toPercentage()
+
+                            Log.i(
+                                "RNPiratechain",
+                                "[$alias] scanned=${lastScannedHeight.value} network=${networkBlockHeight.value} downloaded=${lastDownloadedHeight.value} progress=$progressPct%",
+                            )
+                            // Emit UpdateEvent while syncing (<100). Stop loop at 100.
+                            if (progressPct < 100) {
+                                sendEvent("UpdateEvent") { args ->
+                                    args.putString("alias", alias)
+                                    args.putInt("lastDownloadedHeight", lastDownloadedHeight.value.toInt())
+                                    args.putInt("lastScannedHeight", lastScannedHeight.value.toInt())
+                                    args.putInt("networkBlockHeight", networkBlockHeight.value.toInt())
+                                    args.putInt("scanProgress", progressPct)
+                                }
+                            } else {
+                                // Progress reached 100 - stop periodic logging and let processor listeners handle reporting
+                                break
+                            }
+                        } catch (t: Throwable) {
+                            Log.w("RNPiratechain", "[$alias] status logging error: ${t.message}")
+                        }
+                        delay(intervalMs.toLong())
+                    }
+                } finally {
+                    // On cancellation/close, remove from map
+                    statusLogJobs.remove(alias)
+                }
+            }
+
+        statusLogJobs[alias] = job
     }
 
     @ReactMethod
@@ -144,6 +221,7 @@ class RNPiratechainModule(
         promise.wrap {
             val wallet = getWallet(alias)
             wallet.close()
+            statusLogJobs.remove(alias)?.cancel()
             synchronizerMap.remove(alias)
             return@wrap null
         }
