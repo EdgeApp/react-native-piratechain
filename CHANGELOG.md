@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.17 (2025-11-12)
+
 - changed: (Android) Increase processor update frequency during block download
 
 ## 0.5.16 (2025-11-04)
