@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: (Android) Increase processor update frequency during block download
+
 ## 0.5.16 (2025-11-04)
 
 - changed: (Android) Update pirate dependencies to v1.19.0-beta04
