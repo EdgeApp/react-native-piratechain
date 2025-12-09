@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Updated checkpoints
+
 ## 0.5.18 (2025-11-24)
 
 - changed: (Android) Update pirate dependencies to v1.19.0-beta05
