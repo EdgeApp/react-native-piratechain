@@ -1,14 +1,18 @@
-## react-native-piratechain 0.5.22 - 2026-03-11
-
-- Release bump from 0.5.21 to 0.5.22.
-
 # React Native Piratechain
 
 ## Unreleased
 
+## 0.5.24 (2026-04-10)
+
+- changed: Updated checkpoints
+
 ## 0.5.23 (2026-03-24)
 
 - changed: Updated checkpoints
+
+## 0.5.22 (2026-03-11)
+
+- changed: Release bump from 0.5.21 to 0.5.22.
 
 ## 0.5.21 (2026-02-24)
 
