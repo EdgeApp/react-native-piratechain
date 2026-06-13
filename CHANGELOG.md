@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 (2026-06-13)
+
 - changed: Update Pirate Chain sync checkpoints through block 4000000.
 - changed: Convert the build tooling from Yarn to npm.
 - security: Upgrade dependencies per Socket security recommendations.
