@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.1 (2026-07-13)
+
 ## 0.6.0 (2026-06-13)
 
 - changed: Update Pirate Chain sync checkpoints through block 4000000.
