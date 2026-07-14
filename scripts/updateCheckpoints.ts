@@ -36,7 +36,7 @@ const networks: { [pluginId: string]: Options } = {
       __dirname,
       '../android/src/main/assets/piratesaplingtree/mainnet/'
     ),
-    serverUrl: 'piratelightd1.cryptoforge.cc:443',
+    serverUrl: 'lightd1.pirate.black:443',
     packagePath: 'pirate.wallet.sdk.rpc',
     lastSdkCheckpointHeight: 2040000,
     blockTimeSeconds: 60,
