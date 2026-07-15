@@ -8,6 +8,7 @@ import { deepList, justFiles, makeNodeDisklet, navigateDisklet } from 'disklet'
 import { existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
 
+import { buildVendoredDeps } from './buildVendoredDeps'
 import { copyCheckpoints } from './copyCheckpoints'
 
 const disklet = makeNodeDisklet(join(__dirname, '../'))
@@ -19,6 +20,10 @@ async function main(): Promise<void> {
   await rebuildXcframework()
   await copySwift()
   await copyCheckpoints(disklet)
+  // The SDK's SwiftPM deps (grpc-swift, SwiftNIO, SwiftProtobuf, SQLite.swift)
+  // are pre-built into a vendored static binary, pinned to the same versions
+  // as react-native-zcash's deps so the Edge app carries ONE grpc stack:
+  buildVendoredDeps()
 }
 
 function downloadSources(): void {
