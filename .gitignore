@@ -3,6 +3,7 @@
 /ios/libpiratelc.h
 /ios/libpiratelc.xcframework/
 /ios/PirateLightClientKit/
+/ios/vendored/
 /lib/
 /tmp/
 
