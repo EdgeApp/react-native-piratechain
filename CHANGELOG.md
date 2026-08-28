@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Restore the vendored iOS SDK (Swift sources and xcframework) missing from the 0.6.2 npm package. npm's prepack step was skipped by the publishing machine's ignore-scripts hardening, so 0.6.2 shipped without its native payload and iOS builds failed with missing SDK types.
+
 ## 0.6.2 (2026-08-27)
 
 - changed: Update checkpoints
